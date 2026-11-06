@@ -1,6 +1,6 @@
 # Emby 一键导入站
 
-填一次 Emby 服务器地址、用户名、密码，一键导入到 5 个播放器 App：SenPlayer、Rex、EplayerX、Vidora、Reflix。
+填一次 Emby 服务器地址、用户名、密码，一键导入到 6 个播放器 App：SenPlayer、Rex、EplayerX、Vidora、Noctra、Reflix。
 
 ## 它是什么
 
@@ -20,6 +20,7 @@
 | Rex | ✅ 已确认 | `rex://import?...` |
 | EplayerX | ✅ 已确认 | `https://eplayerx.com/add-or-update?...`（通用链接） |
 | Vidora | ✅ 已确认 | `vidora://emby/import?...` |
+| Noctra | ✅ 已确认 | `noctra://server/import?provider=emby&url=...`。打开后进入核对页，点「导入所选」才会连接并保存 |
 | Reflix | ⚠️ 未确认 | 暂用 `reflix://importserver`（通用格式），只能打开 App、不能直接导入 |
 
 Reflix 的官方格式还没找到：它 App 里如果有像 Vidora 那样的导入教程，截图发出来，我按那个改（也欢迎直接提 PR）。

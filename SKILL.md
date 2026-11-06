@@ -1,13 +1,13 @@
 ---
 name: emby-import
-description: Build or maintain the Emby 一键导入站 — a single-page site where a user enters an Emby server address/username/password and gets one-click import links for SenPlayer, Rex, EplayerX, Vidora and Reflix. Covers the per-app import link formats (which are confirmed, which are not), the app icons, clipboard paste recognition, address parsing, privacy rules, and the Cloudflare Worker deploy + domain workflow.
+description: Build or maintain the Emby 一键导入站 — a single-page site where a user enters an Emby server address/username/password and gets one-click import links for SenPlayer, Rex, EplayerX, Vidora, Noctra and Reflix. Covers the per-app import link formats (which are confirmed, which are not), the app icons, clipboard paste recognition, address parsing, privacy rules, and the Cloudflare Worker deploy + domain workflow.
 ---
 
 # Emby 一键导入站
 
 ## Overview
 
-A pure-frontend single page. The user fills in 服务器名称 / 地址 / 用户名 / 密码 and gets, for each of five player apps, a 「一键导入」 button (opens the app's import deep link) and a 「复制链接」 button.
+A pure-frontend single page. The user fills in 服务器名称 / 地址 / 用户名 / 密码 and gets, for each of six player apps, a 「一键导入」 button (opens the app's import deep link) and a 「复制链接」 button.
 
 - **Worker:** script `emby-import` (no bindings), custom domain only; workers.dev is off by default (404).
 - **Local source (source of truth):** `~/workspace/emby-import/`
@@ -64,6 +64,16 @@ vidora://emby/import?server_url=<origin>&server_path=<path prefix or empty>&user
 - `server_url` = origin only (`scheme://host:port`), `server_path` = the path prefix (e.g. `/emby`) or empty.
 - The tutorial also documents an optional `payload` param (Base64URL-encoded JSON, takes priority over plain params; `backups:[{"remark":"直连","address":"https://…"}]`) and a clipboard template — neither is used by the site.
 
+### Noctra — ✅ confirmed
+
+Source: Noctra `ServerImportLink` (`noctra` URL scheme, host `server`, path `/import`). Parameters are decoded once by `URLComponents`. `url` and `address` are mutually exclusive; this site sends `url` with the full address (scheme, host, port, and path prefix such as `/emby`).
+
+```
+noctra://server/import?provider=emby&url=<full URL>&username=<user>&password=<pass>&name=<name>
+```
+
+Opening the link presents Noctra's review screen. The server is connected and saved only after the user confirms 「导入所选」. Do not add `autoSave` or put the password in the URL userinfo or fragment; those forms are rejected.
+
 ### Reflix — ❌ unresolved
 
 Correct spelling is **Reflix** (App Store id 6621243955, "Reflix - Emby 播放器与追剧助手", dev 晶晶 许 / MagicGroot). Do not spell it "Refilx" — the earlier `refilx://` scheme was wrong and is why it didn't open at all.
@@ -72,13 +82,14 @@ Current site uses `reflix://importserver` (SenPlayer format): it opens the app b
 
 ## Icons
 
-Each app row shows the app's real icon, embedded as a base64 data URI (128px JPEG, ~16KB total for all four).
+Each app row shows the app's real icon, embedded as a base64 data URI (128px JPEG).
 
 - Icons were matched against official App Store artwork via the iTunes Search API before embedding, to avoid misassignment:
   - SenPlayer (id 6443975850) = colorful play triangle
   - Rex (id 6801583759) = black C + star on pastel
   - EplayerX (id 6747369377) = green/cyan E-bars + play triangle on black
   - Vidora (id 6756205248) = white/pink "A" + cyan swoosh on black
+  - Noctra = current app icon (white background, NOC / TRA lettering), resized from the 1024px asset to 128px JPEG. Not looked up in the iTunes Search API.
 - **Reflix has no icon yet** — its row still shows the 🍿 emoji placeholder. Swap it in when the user sends the icon image.
 - `icons.json` is the base64 icon source. When replacing an icon, resize to 128px JPEG and update both `icons.json` and the data URI in `index.html`.
 
@@ -123,7 +134,7 @@ After filling, the page re-renders the generated links and saves address/usernam
      -F "metadata=@meta.json;type=application/json" \
      -F "worker.js=@worker.js;type=application/javascript+module"
    ```
-5. Verify live: `curl https://<你部署的域名>/` returns 200 and contains the changed feature (e.g. `btnPaste`, the new link format, the new icon's base64 marker). Verify the four confirmed link formats are present in the served page.
+5. Verify live: `curl https://<你部署的域名>/` returns 200 and contains the changed feature (e.g. `btnPaste`, the new link format, the new icon's base64 marker). Verify the confirmed link formats, including `noctra://server/import`, are present in the served page.
 
 ## Domain management quirks (learned the hard way)
 
@@ -136,6 +147,7 @@ After filling, the page re-renders the generated links and saves address/usernam
 ## Change log
 
 - 2026-11-06: launched; SenPlayer + Rex formats confirmed from ProxyHub_Emby source; EplayerX universal link + Vidora official format added from user material; Reflix unresolved; 4 real icons embedded.
+- 2026-11-06: Noctra added with the confirmed `noctra://server/import` link. The app shows a review screen and saves only after confirmation.
 - 2026-11-06: domain changed (old domain removed via dashboard).
 - 2026-11-06: 「📋 粘贴识别剪贴板」 button added (clipboard parse + manual fallback; `安全密码` trap handled).
 - 2026-11-06: bottom hint paragraph removed (user request).
