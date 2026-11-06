@@ -91,7 +91,8 @@ Each app row shows the app's real icon, embedded as a base64 data URI (128px JPE
   - Vidora (id 6756205248) = white/pink "A" + cyan swoosh on black
   - Noctra = current app icon (white background, NOC / TRA lettering), resized from the 1024px asset to 128px JPEG. Not looked up in the iTunes Search API.
 - **Reflix has no icon yet** — its row still shows the 🍿 emoji placeholder. Swap it in when the user sends the icon image.
-- `icons.json` is the base64 icon source. When replacing an icon, resize to 128px JPEG and update both `icons.json` and the data URI in `index.html`.
+- `icons.json` is the base64 icon source. When replacing an icon, resize to 128px JPEG and update `icons.json` only. The page loads `/icons.json`; do not paste `data:image/jpeg` into `index.html`.
+- Noctra's icon lives only in `icons.json`. `worker.js` imports that file and serves it at `/icons.json`.
 
 ## Clipboard paste recognition
 
@@ -122,7 +123,7 @@ After filling, the page re-renders the generated links and saves address/usernam
    ```python
    html = open('index.html', encoding='utf-8').read()
    esc = html.replace('\\', '\\\\').replace('`', '\\`').replace('${', '\\${')
-   worker = "const HTML = `" + esc + "`;\n\nexport default {\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/health') return new Response('emby-import ok', { status: 200 });\n    return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });\n  }\n};\n"
+   worker = 'import icons from "./icons.json" with { type: "json" };\n\nconst HTML = `' + esc + "`;\n\nexport default {\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/health') return new Response('emby-import ok', { status: 200 });\n    if (url.pathname === '/icons.json') return new Response(JSON.stringify(icons), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=86400' } });\n    return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });\n  }\n};\n"
    open('worker.js', 'w', encoding='utf-8').write(worker)
    ```
 3. `node --check worker.js`.

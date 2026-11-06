@@ -114,7 +114,7 @@ curl -X PUT -H "Authorization: Bearer $CF_TOKEN" \
 python3 - << 'EOF'
 html = open('index.html', encoding='utf-8').read()
 esc = html.replace('\\', '\\\\').replace('`', '\\`').replace('${', '\\${')
-worker = "const HTML = `" + esc + "`;\n\nexport default {\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/health') return new Response('emby-import ok', { status: 200 });\n    return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });\n  }\n};\n"
+worker = 'import icons from "./icons.json" with { type: "json" };\n\nconst HTML = `' + esc + "`;\n\nexport default {\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/health') return new Response('emby-import ok', { status: 200 });\n    if (url.pathname === '/icons.json') return new Response(JSON.stringify(icons), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=86400' } });\n    return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });\n  }\n};\n"
 open('worker.js', 'w', encoding='utf-8').write(worker)
 EOF
 node --check worker.js   # 检查语法
@@ -124,7 +124,7 @@ node --check worker.js   # 检查语法
 
 ### 常见改动
 
-- **换图标**：把新图标缩到 128px 存成 JPEG，转 base64，替换 `icons.json` 和 `index.html` 里对应的 data URI。
+- **换图标**：把新图标缩到 128px 存成 JPEG，转 base64，只放进 `icons.json`。页面会请求 `/icons.json`，不要把 `data:image/jpeg` 写进 `index.html`。
 - **加一个新 App**：在 `index.html` 的 App 列表里加一项（名字、图标、链接生成函数）。
 - **改某个 App 的导入链接格式**：在 `index.html` 的 `render()` 里找到对应的生成函数，按官方格式改。
 - **Reflix 图标还是 🍿 emoji**：等有人发来 Reflix 的官方图标再替换。
