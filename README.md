@@ -1,14 +1,14 @@
 # Emby 一键导入站
 
-填一次 Emby 服务器地址、用户名、密码，一键导入到 5 个播放器 App：SenPlayer、Rex、EplayerX、Vidora、Reflix。
+填一次 Emby 服务器地址、用户名、密码，一键导入到 14 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer、DenPlayer）；多个服务器可以保存下来随时调用。
 
 ## 它是什么
 
 开 Emby 账号最烦的就是每个 App 都要手动输一遍地址账号密码。这个站就干一件事：
 
 1. 填一次（或者点「📋 粘贴识别剪贴板」，把开户消息粘贴进来自动识别）
-2. 点对应 App 的「一键导入」，App 自动打开并填好服务器
-3. 每个 App 旁边还有「复制链接」，可以把导入链接发给别人
+2. 点对应的格子，App 自动打开并填好服务器；格子右上角的 ⧉ 是复制链接
+3. 播放器排成三列格子，上面是「一键导入」标题
 
 纯前端单页：密码只在你自己的浏览器里用，不上传、不保存；关掉页面就没了。服务器名称、地址、用户名会记在浏览器本地，下次不用重填。
 
@@ -20,7 +20,16 @@
 | Rex | ✅ 已确认 | `rex://import?...` |
 | EplayerX | ✅ 已确认 | `https://eplayerx.com/add-or-update?...`（通用链接） |
 | Vidora | ✅ 已确认 | `vidora://emby/import?...` |
-| Reflix | ⚠️ 未确认 | 暂用 `reflix://importserver`（通用格式），只能打开 App、不能直接导入 |
+| Noctra | ✅ 已确认 | `noctra://server/import?...`，打开后进核对页，点「导入所选」才连接保存 |
+| 小幻影视 | ✅ 已确认 | `rodelplayer://import?...`（官方协议链接），导入前会弹确认框；**仅支持 Windows**，iPhone 上点它没反应 |
+| Hills | ✅ 已确认 | `hills://import?...`（用户从 chilledmelon 导入模板抄来的格式） |
+| FileBar | ✅ 已确认 | `filebar://emby/import?...`（用户从 chilledmelon 导入模板抄来的格式，和 Vidora 同款结构） |
+| VidHub | ✅ 已确认 | `vidhub://import?...`（用户从 chilledmelon 导入模板抄来的格式） |
+| Lenna | ✅ 已确认 | `lenna://emby/import?...`（用户从 chilledmelon 导入模板抄来的格式，和 Vidora 同款结构） |
+| Afusekt | ✅ 已确认 | `afusekt://media.server?...`（用户从 chilledmelon 导入模板抄来的格式） |
+| Streama | ✅ 已确认 | `streama://importserver?...`（用户从 chilledmelon 导入模板抄来的格式） |
+| CapyPlayer | ✅ 已确认 | `com.feifeiduck.capyplayer://add-resource?data=...`（官方文档，base64url JSON） |
+| DenPlayer | ✅ 已确认 | `denplayer://emby/import?...`（用户提供的格式） |
 
 Reflix 的官方格式还没找到：它 App 里如果有像 Vidora 那样的导入教程，截图发出来，我按那个改（也欢迎直接提 PR）。
 
@@ -103,19 +112,16 @@ curl -X PUT -H "Authorization: Bearer $CF_TOKEN" \
 | --- | --- |
 | `index.html` | 页面源码，改这里 |
 | `worker.js` | 生成的 Worker 代码（把 `index.html` 包了一层），改完 `index.html` 要重新生成 |
-| `icons.json` | 4 个 App 图标的 base64 原数据 |
+| `build.py` | 生成 `worker.js` 的脚本（读 `index.html` + 三个 PWA 图标，内联进去） |
+| `icons.json` | 14 个 App 图标的 base64 原数据 |
+| `apple-touch-icon.png` / `icon-192.png` / `icon-512.png` | 添加到主屏幕（PWA）用的图标 |
 | `wrangler.toml` | Wrangler 部署配置 |
 | `SKILL.md` | 给 AI 助手看的开发文档（链接格式、部署细节都在里面） |
 
 ### 改完重新生成 worker.js
 
 ```bash
-python3 - << 'EOF'
-html = open('index.html', encoding='utf-8').read()
-esc = html.replace('\\', '\\\\').replace('`', '\\`').replace('${', '\\${')
-worker = "const HTML = `" + esc + "`;\n\nexport default {\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/health') return new Response('emby-import ok', { status: 200 });\n    return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });\n  }\n};\n"
-open('worker.js', 'w', encoding='utf-8').write(worker)
-EOF
+python3 build.py
 node --check worker.js   # 检查语法
 ```
 
@@ -127,6 +133,15 @@ node --check worker.js   # 检查语法
 - **加一个新 App**：在 `index.html` 的 App 列表里加一项（名字、图标、链接生成函数）。
 - **改某个 App 的导入链接格式**：在 `index.html` 的 `render()` 里找到对应的生成函数，按官方格式改。
 - **Reflix 图标还是 🍿 emoji**：等有人发来 Reflix 的官方图标再替换。
+
+## 已保存的服务器
+
+表单上方有个「已保存的服务器」下拉框：
+
+- 填好一个服务器后点「💾 保存」，地址、用户名、密码都会存在本机浏览器里（`localStorage`，不上传）
+- 下次从下拉框里选它，四个格子一次填好
+- 同一个地址 + 用户名再保存一次会更新，不会重复
+- 最多存 200 个；选中后点「删除」可以删掉
 
 ## 剪贴板识别规则
 
@@ -143,7 +158,7 @@ node --check worker.js   # 检查语法
 
 ## 隐私
 
-- 密码不上传、不保存，只在浏览器里拼链接用
+- 密码不上传；只在「已保存的服务器」里存在本机浏览器里（你自己点的保存），不填保存就不会存
 - 名称、地址、用户名存在浏览器 localStorage，只在你自己的设备上
 - 本仓库不含任何真实服务器地址、账号、密码
 
