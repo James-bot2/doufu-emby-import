@@ -164,10 +164,11 @@ node --check worker.js   # 检查语法
 
 页面下方有个「分流同步」区：把已保存的服务器线路按域名生成代理规则。
 
-- **分组**：按线路名里的关键词分四组，直连（直连/直链/direct → DIRECT）、代理（代理/中转/加速/relay/proxy → Proxy）、CF 线路（cf/cloudflare/优选/官方 → Proxy）、兜底（没命中关键词的域名 → Proxy，后缀匹配）。点分组可以展开看里面的域名；关键词可以在展开后改。
+- **分组**：按线路名里的关键词分四组，直连（直连/直链/direct → DIRECT）、代理（代理/中转/加速/relay/proxy → Proxy）、CF 线路（cf/cloudflare/优选/官方 → Proxy）、兜底（没命中关键词的域名 → Proxy，后缀匹配）。点分组可以展开看里面的域名；点「⚙️ 编辑分组」可以改每组的名称、开关、策略、QX 策略、关键词、匹配方式（精确/后缀）和顺序。
 - **单线路设置**：点某条域名后的策略（DIRECT / Proxy）可以单独改，点 DOMAIN / DOMAIN-SUFFIX 胶囊可以切换精确还是后缀匹配，优先于分组。
-- **生成软件**：Surge、Loon、Stash、Quantumult X、Shadowrocket、Egern、Clash，一共 7 套，可勾选；点「⬇ 下载全部」一次下载选中的规则文件，每行也可以单独复制/下载。
-- **同步到 Gist**：填一个 GitHub 令牌（需要 `gist` 权限）和 Gist ID（首次同步后自动填），点「同步到 Gist」就把规则文件写进一个私有 Gist；勾选「保存服务器时自动同步」，以后保存/删除服务器会自动同步。令牌只存在本机浏览器，只发给 api.github.com。
+- **生成软件**：Surge、Shadowrocket、Egern、Loon、Quantumult X、Stash / Clash，一共 6 个（7 份文件）。Surge 和 Shadowrocket 是模块（`.sgmodule`，Surge 的带 `EmbyProxy` 参数，导入后在模块里就能改策略），Loon 是插件（`.plugin`，在插件详情里选策略组），Egern 是 YAML 规则文件，QX 是规则列表，Stash 和 Clash 是同一份 YAML（`payload:`）。点「⬇ 下载全部」一次下载选中的规则文件，每行也可以单独复制/下载。
+- **同步**：页面显示域名个数、本地更新时间、Gist 更新时间；「同步到」可以选本地 + Gist、仅本地或仅 Gist；点「↻ 立即同步」执行。
+- **同步到 Gist**：填一个 GitHub 令牌（需要 `gist` 权限）和 Gist ID（首次同步后自动填），点「同步到 Gist」就把规则文件写进一个私有 Gist；勾选「保存服务器时自动同步」，以后保存/删除服务器会自动同步。令牌只存在本机浏览器，只发给 api.github.com。同步成功后，「一键导入（Gist）」区会给出每个文件的地址，复制到代理软件里就能直接导入（GitHub 约 5 分钟缓存）。
 
 ## 剪贴板识别规则
 

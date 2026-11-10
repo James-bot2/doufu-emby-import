@@ -138,9 +138,35 @@
   .rt-tool.off{opacity:.5}
   .rt-file{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--hairline);font-size:14px}
   .rt-file:first-child{border-top:none}
-  .rt-file-name{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-file-name{flex:1;min-width:0;font-weight:600;font-size:13px;line-height:1.35;word-break:break-all}
   .rt-file-meta{font-size:12px;color:var(--muted);flex:none}
   .rt-empty{font-size:14px;color:var(--muted);padding:12px 0;line-height:1.6}
+  .rt-sec-head{display:flex;justify-content:flex-end;margin-bottom:10px}
+  .rt-sync{border-top:1px solid var(--hairline);margin-top:14px;padding-top:12px}
+  .rt-sync-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--hairline);font-size:14px}
+  .rt-sync-row:first-child{border-top:none}
+  .rt-sync-row>span{color:var(--muted)}
+  .rt-sync-row>b{font-weight:600;text-align:right}
+  .rt-sync-row select{width:auto;min-height:38px;padding:8px 10px;font-size:14px}
+  .rt-import-link{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--hairline);font-size:14px}
+  .rt-import-link:first-child{border-top:none}
+  .rt-modal{position:fixed;inset:0;background:rgba(20,8,14,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+  .rt-modal-card{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:88vh;overflow:auto;padding:18px 18px 24px}
+  .rt-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .rt-modal-head b{font-size:18px}
+  .rt-ed-group{border:1px solid var(--hairline);border-radius:var(--radius-sm);background:var(--field);padding:12px 14px;margin-bottom:10px}
+  .rt-ed-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .rt-ed-name{flex:1;min-width:0;font-weight:700;font-size:16px;min-height:40px;padding:8px 12px}
+  .rt-ed-top .mini-btn{padding:0 10px;min-height:32px}
+  .rt-ed-enable{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);cursor:pointer;flex:none}
+  .rt-ed-enable input{width:16px;height:16px;min-height:0;accent-color:var(--accent);padding:0}
+  .rt-ed-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--hairline)}
+  .rt-ed-row>span{flex:none;width:60px;color:var(--muted);font-size:14px}
+  .rt-ed-row select{flex:1;min-width:0;min-height:40px;padding:8px 10px;font-size:14px}
+  .rt-ed-row input[type=text]{flex:1;min-width:0;min-height:40px;padding:8px 12px;font-size:14px}
+  .rt-seg{display:flex;flex:1;border:1.5px solid var(--hairline-strong);border-radius:999px;overflow:hidden;background:var(--surface)}
+  .rt-seg button{flex:1;border:none;background:transparent;padding:8px 6px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+  .rt-seg button.on{background:var(--accent);color:var(--accent-ink)}
   .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-tile);padding:12px 6px 10px;cursor:pointer;min-width:0;overflow:hidden;transition:transform var(--m-in) var(--ease),box-shadow var(--m-in) var(--ease),border-color var(--m-in) var(--ease)}
   @media (hover:hover){ .tile:hover{transform:translateY(-2px);border-color:var(--hairline-strong);box-shadow:var(--shadow-tile-hover)} }
@@ -214,6 +240,9 @@
     <h2 class="apps-title">分流同步</h2>
     <p class="apps-sub">从已保存的服务器线路生成代理规则，按关键词分组</p>
     <div class="card">
+      <div class="rt-sec-head">
+        <button type="button" id="btnRtEditGroups" class="mini-btn">⚙️ 编辑分组（关键词 / 策略 / 顺序）</button>
+      </div>
       <div id="rtGroups"></div>
       <p class="route-count">单线路设置优先，其余按分组顺序匹配。点行看域名，点策略切换直连 / 代理，点胶囊切换精确 / 后缀。Loon 非直连统一走 PROXY。</p>
       <label>生成哪些软件 <span id="rtToolCount" style="font-weight:400"></span></label>
@@ -223,6 +252,25 @@
         <button type="button" id="btnRtCopy" class="mini-btn">复制全部</button>
       </div>
       <div id="rtFiles" style="margin-top:4px"></div>
+      <div class="rt-sync">
+        <div class="rt-sync-row"><span>域名</span><b id="rtDomainCount">0 个</b></div>
+        <div class="rt-sync-row"><span>本地更新时间</span><b id="rtLocalTime">—</b></div>
+        <div class="rt-sync-row"><span>Gist 更新时间</span><b id="rtGistTime">还没上传 Gist</b></div>
+        <div class="rt-sync-row"><span>同步到</span>
+          <select id="rtSyncDest">
+            <option value="both">本地 + Gist</option>
+            <option value="local">仅本地</option>
+            <option value="gist">仅 Gist</option>
+          </select>
+        </div>
+        <button type="button" id="btnRtSync" class="paste-btn" style="margin-top:12px;margin-bottom:0">↻ 立即同步</button>
+        <p class="saved-note">Surge 模块带参数 EmbyProxy，导入后在模块里就能改策略；Loon 插件在插件详情里选策略组；Shadowrocket / Egern 直接使用各分组和「兜底」里填的策略。</p>
+      </div>
+      <div id="rtImport" style="display:none">
+        <label>一键导入（Gist）</label>
+        <div id="rtImportLinks"></div>
+        <p class="saved-note">导入或复制地址前先同步上传，成功后才提供链接。只上传域名，不含账号密码；GitHub 约 5 分钟缓存。</p>
+      </div>
       <label>自动同步到 Gist</label>
       <input id="rtGistToken" type="password" placeholder="GitHub 令牌（需要 gist 权限）" autocomplete="off" autocapitalize="off">
       <div class="saved-row" style="margin-top:8px">
@@ -235,6 +283,17 @@
       <p class="saved-note" id="rtGistStatus">令牌只存在本机浏览器，只发给 api.github.com，不经过本站服务器。没有令牌时先在 GitHub 创建一个带 gist 权限的令牌。</p>
     </div>
   </section>
+
+  <div id="rtGroupModal" class="rt-modal" style="display:none" role="dialog" aria-label="编辑分组">
+    <div class="rt-modal-card">
+      <div class="rt-modal-head">
+        <b>编辑分组</b>
+        <button type="button" id="btnRtGroupDone" class="mini-btn">完成</button>
+      </div>
+      <p class="saved-note" style="margin-top:0">单线路设置优先，其余按分组顺序匹配。点行看域名，点胶囊切换精确 / 后缀。Loon 非直连统一走 PROXY。</p>
+      <div id="rtGroupEditor"></div>
+    </div>
+  </div>
 
   <p class="foot">密码只在本地拼进链接 · 不上传 · 不保存到服务器</p>
   <p class="foot">💗 感谢奥斯卡卡的鼎力协助</p>
@@ -725,54 +784,87 @@ $('btnDelServer').onclick=function(){
 
 // ---- 分流规则同步（从已保存服务器取域名，按关键词分组，生成各软件规则 + Gist 同步） ----
 var LS_RT_OVERRIDES='embyimp_routing_overrides'; // {host:{policy:'DIRECT'|'PROXY', type:'DOMAIN'|'DOMAIN-SUFFIX'}}
-var LS_RT_GROUPS='embyimp_routing_groups'; // {groupId:[keywords]}
+var LS_RT_GROUPS='embyimp_routing_groups'; // [{id,name,enabled,policy,qx,keywords,match}]，兜底固定最后；旧格式 {id:[keywords]} 自动迁移
 var LS_GIST_TOKEN='embyimp_gist_token';
 var LS_GIST_ID='embyimp_gist_id';
+var LS_GIST_OWNER='embyimp_gist_owner';
 var LS_GIST_AUTO='embyimp_gist_auto';
+var LS_GIST_UPDATED='embyimp_gist_updated';
+var LS_RT_LOCAL='embyimp_rt_local_updated';
+var LS_RT_DEST='embyimp_rt_sync_dest';
 var LS_RT_TOOLS='embyimp_routing_tools';
-var RT_GROUPS=[
-  {id:'direct', name:'直连', policy:'DIRECT', type:'DOMAIN', keywords:['直连','直链','direct'], icon:'➡️'},
-  {id:'proxy', name:'代理', policy:'PROXY', type:'DOMAIN', keywords:['代理','中转','加速','relay','proxy'], icon:'🌐'},
-  {id:'cf', name:'CF 线路', policy:'PROXY', type:'DOMAIN', keywords:['cf','cloudflare','优选','官方'], icon:'🌐'},
-  {id:'fallback', name:'兜底', policy:'PROXY', type:'DOMAIN-SUFFIX', keywords:[], icon:'🌐'},
-];
+function RT_DEFAULT_GROUPS(){
+  return [
+    {id:'direct', name:'直连', enabled:true, policy:'DIRECT', qx:'follow', keywords:['直连','直链','direct'], match:'DOMAIN'},
+    {id:'proxy', name:'代理', enabled:true, policy:'PROXY', qx:'follow', keywords:['代理','中转','加速','relay','proxy'], match:'DOMAIN'},
+    {id:'cf', name:'CF 线路', enabled:true, policy:'PROXY', qx:'follow', keywords:['cf','cloudflare','优选','官方'], match:'DOMAIN'},
+    {id:'fallback', name:'兜底', enabled:true, policy:'PROXY', qx:'follow', keywords:[], match:'DOMAIN-SUFFIX'},
+  ];
+}
+// 6 个软件，7 份文件：Stash / Clash 共用一个条目，生成两份同内容 YAML。
+// Surge/Shadowrocket 是 .sgmodule（模块），Loon 是 .plugin（插件），Egern 是 YAML 规则，QX 是 .list，Stash/Clash 是 Clash payload YAML。
 var RT_TOOLS=[
-  {id:'surge', name:'Surge', file:'emby-surge.list', fmt:'list'},
-  {id:'loon', name:'Loon', file:'emby-loon.list', fmt:'list'},
-  {id:'stash', name:'Stash', file:'emby-stash.yaml', fmt:'yaml'},
-  {id:'qx', name:'Quantumult X', file:'emby-qx.list', fmt:'qx'},
-  {id:'shadowrocket', name:'Shadowrocket', file:'emby-shadowrocket.list', fmt:'list'},
-  {id:'egern', name:'Egern', file:'emby-egern.list', fmt:'list'},
-  {id:'clash', name:'Clash', file:'emby-clash.yaml', fmt:'yaml'},
+  {id:'surge', name:'Surge', files:['emby-proxy-surge.sgmodule'], fmt:'surge', hint:'模块，带 EmbyProxy 参数'},
+  {id:'shadowrocket', name:'Shadowrocket', files:['emby-proxy.sgmodule'], fmt:'sgmodule', hint:'模块'},
+  {id:'egern', name:'Egern', files:['emby-proxy-egern.yaml'], fmt:'egern', hint:'YAML 规则'},
+  {id:'loon', name:'Loon', files:['emby-proxy.plugin'], fmt:'plugin', hint:'插件，详情里选策略组'},
+  {id:'qx', name:'Quantumult X', files:['emby-proxy-qx.list'], fmt:'qx', hint:'规则列表'},
+  {id:'stashclash', name:'Stash / Clash', files:['emby-proxy-stash.yaml','emby-proxy-clash.yaml'], fmt:'yaml', hint:'YAML，两份'},
 ];
 var rtExpanded={}; // groupId -> bool
 var rtLastSig='';
+var rtLastContentSig='';
 
 function rtGetGroups(){
+  var raw=null;
+  try{ raw=JSON.parse(localStorage.getItem(LS_RT_GROUPS)||'null'); }catch(e){}
+  var defs=RT_DEFAULT_GROUPS();
+  if(Array.isArray(raw) && raw.length){
+    var byId={}; defs.forEach(function(g){ byId[g.id]=g; });
+    var out=[];
+    raw.forEach(function(g){
+      if(!g||!g.id||!byId[g.id]) return;
+      var d=byId[g.id];
+      out.push({
+        id:g.id,
+        name:(typeof g.name==='string'&&g.name.trim())?g.name.trim():d.name,
+        enabled:g.enabled!==false,
+        policy:g.policy==='DIRECT'?'DIRECT':'PROXY',
+        qx:(g.qx==='DIRECT'||g.qx==='PROXY')?g.qx:'follow',
+        keywords:Array.isArray(g.keywords)?g.keywords.filter(function(s){ return typeof s==='string'&&s.trim(); }):d.keywords.slice(),
+        match:g.match==='DOMAIN-SUFFIX'?'DOMAIN-SUFFIX':'DOMAIN'
+      });
+    });
+    defs.forEach(function(d){ if(!out.some(function(g){ return g.id===d.id; })) out.push(d); });
+    var fb=out.filter(function(g){ return g.id==='fallback'; })[0];
+    out=out.filter(function(g){ return g.id!=='fallback'; });
+    if(fb) out.push(fb);
+    return out;
+  }
+  // 旧格式 {groupId:[keywords]}：只迁移关键词，其余取默认值
   var custom={};
-  try{ custom=JSON.parse(localStorage.getItem(LS_RT_GROUPS)||'{}')||{}; }catch(e){}
-  return RT_GROUPS.map(function(g){
+  if(raw && typeof raw==='object' && !Array.isArray(raw)) custom=raw;
+  return defs.map(function(g){
     var kw=custom[g.id];
-    return { id:g.id, name:g.name, policy:g.policy, type:g.type, keywords:Array.isArray(kw)?kw:g.keywords, icon:g.icon };
+    if(Array.isArray(kw)) g.keywords=kw.filter(function(s){ return typeof s==='string'&&s.trim(); });
+    return g;
   });
 }
-function rtSaveGroupKeywords(id, keywords){
-  var custom={};
-  try{ custom=JSON.parse(localStorage.getItem(LS_RT_GROUPS)||'{}')||{}; }catch(e){}
-  custom[id]=keywords;
-  try{ localStorage.setItem(LS_RT_GROUPS, JSON.stringify(custom)); }catch(e){}
+function rtSaveGroups(groups){
+  try{ localStorage.setItem(LS_RT_GROUPS, JSON.stringify(groups)); }catch(e){}
   renderRouting(true);
 }
 function rtMatchGroup(label, groups){
   var s=(label||'').toLowerCase();
   for(var i=0;i<groups.length;i++){
     var g=groups[i];
+    if(g.id==='fallback'||!g.enabled) continue;
     for(var j=0;j<g.keywords.length;j++){
       var kw=String(g.keywords[j]||'').toLowerCase().trim();
       if(kw && s.indexOf(kw)>=0) return g;
     }
   }
-  return groups[groups.length-1];
+  return groups[groups.length-1]; // 兜底
 }
 function rtCollectHosts(){
   var map={};
@@ -794,10 +886,19 @@ function rtGetOverrides(){
 function rtSaveOverrides(o){ try{ localStorage.setItem(LS_RT_OVERRIDES, JSON.stringify(o)); }catch(e){} }
 function rtResolve(host, group, overrides){
   var ov=overrides[host.host]||{};
-  return { policy:ov.policy||group.policy, type:ov.type||group.type, overridden:!!(ov.policy||ov.type) };
+  var policy=ov.policy||group.policy;
+  var type=ov.type||group.match;
+  var qxPolicy=group.qx==='follow'?policy:group.qx;
+  return { policy:policy, type:type, qxPolicy:qxPolicy, overridden:!!(ov.policy||ov.type) };
 }
 function rtGetTools(){
-  try{ var t=JSON.parse(localStorage.getItem(LS_RT_TOOLS)||'null'); if(Array.isArray(t)&&t.length) return t.filter(function(id){ return RT_TOOLS.some(function(x){ return x.id===id; }); }); }catch(e){}
+  try{
+    var t=JSON.parse(localStorage.getItem(LS_RT_TOOLS)||'null');
+    if(Array.isArray(t)&&t.length){
+      var ok=t.filter(function(id){ return RT_TOOLS.some(function(x){ return x.id===id; }); });
+      if(ok.length) return ok;
+    }
+  }catch(e){}
   return RT_TOOLS.map(function(x){ return x.id; });
 }
 function rtSaveTools(ids){ try{ localStorage.setItem(LS_RT_TOOLS, JSON.stringify(ids)); }catch(e){} }
@@ -809,25 +910,66 @@ function rtBuildEntries(){
   hosts.forEach(function(h){
     var g=rtMatchGroup((h.label||'')+' '+(h.server||''), groups);
     var r=rtResolve(h, g, overrides);
-    entries.push({ host:h.host, label:h.label, server:h.server, group:g, policy:r.policy, type:r.type, overridden:r.overridden });
+    entries.push({ host:h.host, label:h.label, server:h.server, group:g, policy:r.policy, type:r.type, qxPolicy:r.qxPolicy, overridden:r.overridden });
   });
   // 按分组顺序，再按域名排序
   var order={}; groups.forEach(function(g,i){ order[g.id]=i; });
   entries.sort(function(a,b){ var d=order[a.group.id]-order[b.group.id]; return d!==0?d:(a.host<b.host?-1:a.host>b.host?1:0); });
   return { groups:groups, entries:entries };
 }
+// 各格式的策略写法：
+// Surge 模块只能用内部策略，代理走 %EmbyProxy% 参数（用户在模块设置里改）；
+// Shadowrocket 模块直接用 PROXY；Loon 插件非直连统一 PROXY（插件详情里选策略组）；
+// Egern 的策略组名是 Proxy（首字母大写）；QX 用分组的 QX 设置（跟随则与分组策略一致）。
+function rtPolicyFor(fmt, e){
+  var p=e.policy;
+  if(fmt==='surge') return p==='DIRECT'?'DIRECT':'%EmbyProxy%';
+  if(fmt==='egern') return p==='DIRECT'?'DIRECT':'Proxy';
+  if(fmt==='qx') return (e.qxPolicy||p)==='DIRECT'?'DIRECT':'PROXY';
+  if(fmt==='loon') return p==='DIRECT'?'DIRECT':'PROXY';
+  return p;
+}
 function rtBuildRules(tool, entries){
+  var fmt=tool.fmt;
   var lines=[];
-  if(tool.fmt==='yaml'){
+  if(fmt==='yaml'){ // Clash / Stash：payload 列表
     lines.push('payload:');
-    entries.forEach(function(e){ lines.push('  - '+e.type+','+e.host+','+e.policy); });
+    entries.forEach(function(e){ lines.push('  - '+e.type+','+e.host+','+rtPolicyFor('yaml',e)); });
     return lines.join('\n')+'\n';
   }
-  if(tool.fmt==='qx'){
+  if(fmt==='qx'){
     entries.forEach(function(e){
       var kw=e.type==='DOMAIN-SUFFIX' ? 'host-suffix' : 'host';
-      lines.push(kw+','+e.host+','+e.policy);
+      lines.push(kw+','+e.host+','+rtPolicyFor('qx',e));
     });
+    return lines.join('\n')+'\n';
+  }
+  if(fmt==='egern'){ // Egern：rules 列表，每条带自己的策略
+    lines.push('# Emby 分流规则（由 Emby 一键导入生成）');
+    lines.push('rules:');
+    entries.forEach(function(e){
+      var key=e.type==='DOMAIN-SUFFIX' ? 'domain_suffix' : 'domain';
+      lines.push('  - '+key+':');
+      lines.push('      match: '+e.host);
+      lines.push('      policy: '+rtPolicyFor('egern',e));
+    });
+    return lines.join('\n')+'\n';
+  }
+  if(fmt==='sgmodule' || fmt==='surge'){ // Surge / Shadowrocket 模块
+    lines.push('#!name=Emby Proxy');
+    lines.push('#!desc=Emby 分流规则（由 Emby 一键导入生成）');
+    if(fmt==='surge') lines.push('#!arguments=EmbyProxy=PROXY');
+    lines.push('');
+    lines.push('[Rule]');
+    entries.forEach(function(e){ lines.push(e.type+','+e.host+','+rtPolicyFor(fmt,e)); });
+    return lines.join('\n')+'\n';
+  }
+  if(fmt==='plugin'){ // Loon 插件
+    lines.push('#!name=Emby Proxy');
+    lines.push('#!desc=Emby 分流规则（由 Emby 一键导入生成）');
+    lines.push('');
+    lines.push('[Rule]');
+    entries.forEach(function(e){ lines.push(e.type+','+e.host+','+rtPolicyFor('loon',e)); });
     return lines.join('\n')+'\n';
   }
   entries.forEach(function(e){ lines.push(e.type+','+e.host+','+e.policy); });
@@ -835,9 +977,16 @@ function rtBuildRules(tool, entries){
 }
 function rtBuildAllFiles(){
   var entries=rtBuildEntries().entries;
-  var out={};
-  RT_TOOLS.forEach(function(t){ out[t.id]={ name:t.file, tool:t, content:rtBuildRules(t, entries) }; });
+  var out=[];
+  RT_TOOLS.forEach(function(t){
+    var content=rtBuildRules(t, entries);
+    t.files.forEach(function(fn){ out.push({ toolId:t.id, name:fn, tool:t, content:content }); });
+  });
   return out;
+}
+function rtSelectedFiles(){
+  var sel=rtGetTools();
+  return rtBuildAllFiles().filter(function(f){ return sel.indexOf(f.toolId)>=0; });
 }
 function rtCyclePolicy(host){
   var ov=rtGetOverrides();
@@ -852,18 +1001,36 @@ function rtCyclePolicy(host){
 function rtToggleType(host){
   var ov=rtGetOverrides();
   var cur=ov[host.host]||{};
-  var effective=cur.type||host.group.type;
+  var effective=cur.type||host.group.match;
   var next=effective==='DOMAIN'?'DOMAIN-SUFFIX':'DOMAIN';
-  if(next===host.group.type) delete cur.type; else cur.type=next;
+  if(next===host.group.match) delete cur.type; else cur.type=next;
   if(!cur.policy && !cur.type) delete ov[host.host]; else ov[host.host]=cur;
   rtSaveOverrides(ov);
   renderRouting(true);
 }
+function rtTouchLocal(){ try{ localStorage.setItem(LS_RT_LOCAL, String(Date.now())); }catch(e){} }
+function rtGetLocalTime(){ try{ var v=Number(localStorage.getItem(LS_RT_LOCAL)||'0'); return v||0; }catch(e){ return 0; } }
+function rtGetGistTime(){ try{ var v=Number(localStorage.getItem(LS_GIST_UPDATED)||'0'); return v||0; }catch(e){ return 0; } }
+function rtFmtTime(ts){
+  var d=new Date(ts);
+  function p(n){ return (n<10?'0':'')+n; }
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function rtCountServers(entries){
+  var seen={};
+  entries.forEach(function(e){ if(e.server) seen[e.server]=1; });
+  return Object.keys(seen).length;
+}
 function renderRouting(force){
   var data=rtBuildEntries();
-  var sig=JSON.stringify(data.entries.map(function(e){ return [e.host,e.group.id,e.policy,e.type]; }))+'|'+rtGetTools().join(',');
+  var contentSig=JSON.stringify(data.entries.map(function(e){ return [e.host,e.group.id,e.policy,e.type,e.qxPolicy]; }));
+  var sig=contentSig+'|'+rtGetTools().join(',');
   if(!force && sig===rtLastSig) return;
   rtLastSig=sig;
+  if(contentSig!==rtLastContentSig){
+    rtLastContentSig=contentSig;
+    if(data.entries.length) rtTouchLocal();
+  }
   var groups=data.groups, entries=data.entries;
   var box=$('rtGroups');
   box.innerHTML='';
@@ -874,12 +1041,13 @@ function renderRouting(force){
     var list=entries.filter(function(e){ return e.group.id===g.id; });
     var grp=document.createElement('div');
     grp.className='rt-group'+(rtExpanded[g.id]?' open':'');
-    var kwText=g.keywords.length?('关键词 '+g.keywords.join(' / ')+' · '+list.length+' 个域名'):'未命中其他分组的域名 · '+list.length+' 个';
+    var kwText=g.id==='fallback'
+      ? ('未命中其他分组的域名 · '+list.length+' 个')
+      : ('关键词 '+g.keywords.join(' / ')+' · '+list.length+' 个域名');
     var head=document.createElement('div');
     head.className='rt-group-head';
-    head.innerHTML='<div class="rt-ico">'+g.icon+'</div>'
-      +'<div class="rt-gname"><b>'+escapeHtml(g.name)+' → '+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'</b><span>'+escapeHtml(kwText)+'</span></div>'
-      +'<span class="rt-policy'+(g.policy==='DIRECT'?' direct':'')+'">'+g.type+'</span>'
+    head.innerHTML='<div class="rt-gname"><b>'+escapeHtml(g.name)+' → '+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'</b><span>'+escapeHtml(kwText)+'</span></div>'
+      +'<span class="rt-policy'+(g.policy==='DIRECT'?' direct':'')+'">'+g.match+'</span>'
       +'<span class="rt-chev">›</span>';
     head.onclick=function(){ rtExpanded[g.id]=!rtExpanded[g.id]; renderRouting(true); };
     grp.appendChild(head);
@@ -908,23 +1076,15 @@ function renderRouting(force){
       row.appendChild(info); row.appendChild(pol); row.appendChild(typ);
       hostsEl.appendChild(row);
     });
-    if(g.id!=='fallback'){
-      var kwLabel=document.createElement('span');
-      kwLabel.className='rt-kw-label';
-      kwLabel.textContent='关键词（逗号分隔，改完自动保存）';
-      var kwInput=document.createElement('input');
-      kwInput.type='text'; kwInput.className='rt-kw';
-      kwInput.value=g.keywords.join('，');
-      kwInput.placeholder='例如：直连，直链，direct';
-      kwInput.onchange=function(){
-        var kws=kwInput.value.split(/[,，、\s]+/).map(function(s){ return s.trim(); }).filter(Boolean);
-        rtSaveGroupKeywords(g.id, kws);
-      };
-      hostsEl.appendChild(kwLabel); hostsEl.appendChild(kwInput);
-    }
     grp.appendChild(hostsEl);
     box.appendChild(grp);
   });
+  // 同步状态
+  $('rtDomainCount').textContent=entries.length+' 个（来自 '+rtCountServers(entries)+' 个服务器）';
+  var lt=rtGetLocalTime();
+  $('rtLocalTime').textContent=lt?rtFmtTime(lt):'—';
+  var gt=rtGetGistTime();
+  $('rtGistTime').textContent=gt?rtFmtTime(gt):'还没上传 Gist';
   // 工具选择
   var toolsBox=$('rtTools');
   toolsBox.innerHTML='';
@@ -934,6 +1094,7 @@ function renderRouting(force){
     var on=sel.indexOf(t.id)>=0;
     var lab=document.createElement('label');
     lab.className='rt-tool'+(on?'':' off');
+    lab.title=t.hint||'';
     var cb=document.createElement('input');
     cb.type='checkbox'; cb.checked=on;
     cb.onchange=function(){
@@ -949,11 +1110,10 @@ function renderRouting(force){
     toolsBox.appendChild(lab);
   });
   // 文件列表
-  var files=rtBuildAllFiles();
+  var files=rtSelectedFiles();
   var filesBox=$('rtFiles');
   filesBox.innerHTML='';
-  sel.forEach(function(id){
-    var f=files[id];
+  files.forEach(function(f){
     var row=document.createElement('div');
     row.className='rt-file';
     var nm=document.createElement('span');
@@ -972,6 +1132,32 @@ function renderRouting(force){
     row.appendChild(nm); row.appendChild(meta); row.appendChild(cp); row.appendChild(dl);
     filesBox.appendChild(row);
   });
+  rtRenderImportLinks();
+}
+function rtRenderImportLinks(){
+  var box=$('rtImport');
+  var links=$('rtImportLinks');
+  var gid=$('rtGistId').value.trim();
+  var owner='';
+  try{ owner=localStorage.getItem(LS_GIST_OWNER)||''; }catch(e){}
+  if(!gid || !owner || !rtGetGistTime()){ box.style.display='none'; links.innerHTML=''; return; }
+  box.style.display='';
+  links.innerHTML='';
+  rtSelectedFiles().forEach(function(f){
+    var url='https://gist.githubusercontent.com/'+encodeURIComponent(owner)+'/'+encodeURIComponent(gid)+'/raw/'+encodeURIComponent(f.name);
+    var row=document.createElement('div');
+    row.className='rt-import-link';
+    var nm=document.createElement('span');
+    nm.className='rt-file-name'; nm.textContent=f.name;
+    var cp=document.createElement('button');
+    cp.type='button'; cp.className='mini-btn'; cp.textContent='复制地址';
+    cp.onclick=function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){ toast('地址已复制'); }, function(){ fallbackCopy(url); toast('地址已复制'); }); }
+      else { fallbackCopy(url); toast('地址已复制'); }
+    };
+    row.appendChild(nm); row.appendChild(cp);
+    links.appendChild(row);
+  });
 }
 function rtDownloadFile(f){
   var blob=new Blob([f.content], {type:'text/plain;charset=utf-8'});
@@ -982,28 +1168,43 @@ function rtDownloadFile(f){
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 $('btnRtDownload').onclick=function(){
-  var sel=rtGetTools();
-  var files=rtBuildAllFiles();
+  var files=rtSelectedFiles();
   if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
-  sel.forEach(function(id, i){ setTimeout(function(){ rtDownloadFile(files[id]); }, i*350); });
-  toast('已开始下载 '+sel.length+' 个规则文件');
+  files.forEach(function(f, i){ setTimeout(function(){ rtDownloadFile(f); }, i*350); });
+  rtTouchLocal();
+  toast('已开始下载 '+files.length+' 个规则文件');
+  renderRouting(true);
 };
 $('btnRtCopy').onclick=function(){
-  var sel=rtGetTools();
-  var files=rtBuildAllFiles();
+  var files=rtSelectedFiles();
   if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
-  var text=sel.map(function(id){ return '# '+files[id].name+'\n'+files[id].content; }).join('\n');
+  var text=files.map(function(f){ return '# '+f.name+'\n'+f.content; }).join('\n');
   if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ toast('全部规则已复制'); }, function(){ fallbackCopy(text); toast('全部规则已复制'); }); }
   else { fallbackCopy(text); toast('全部规则已复制'); }
 };
+$('btnRtSync').onclick=function(){
+  var dest=$('rtSyncDest').value;
+  if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
+  if(dest==='local'||dest==='both'){
+    var files=rtSelectedFiles();
+    files.forEach(function(f,i){ setTimeout(function(){ rtDownloadFile(f); }, i*350); });
+    rtTouchLocal();
+    toast('已开始下载 '+files.length+' 个规则文件');
+  }
+  if(dest==='gist'||dest==='both'){
+    rtGistSync();
+  }
+  renderRouting(true);
+};
+$('rtSyncDest').addEventListener('change', function(){ try{ localStorage.setItem(LS_RT_DEST, this.value); }catch(e){} });
 async function rtGistSync(){
   var token=$('rtGistToken').value.trim();
   var gid=$('rtGistId').value.trim();
   if(!token){ toast('先填 GitHub 令牌'); $('rtGistToken').focus(); return; }
   if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
-  var files=rtBuildAllFiles();
+  var files=rtSelectedFiles();
   var gistFiles={};
-  rtGetTools().forEach(function(id){ gistFiles[files[id].name]={content:files[id].content}; });
+  files.forEach(function(f){ gistFiles[f.name]={content:f.content}; });
   $('rtGistStatus').textContent='正在同步到 Gist…';
   try{
     var res=await fetch(gid?('https://api.github.com/gists/'+encodeURIComponent(gid)):'https://api.github.com/gists', {
@@ -1014,8 +1215,11 @@ async function rtGistSync(){
     var j=await res.json();
     if(!res.ok) throw new Error((j&&j.message)||('HTTP '+res.status));
     if(j.id){ $('rtGistId').value=j.id; try{ localStorage.setItem(LS_GIST_ID, j.id); }catch(e){} }
-    $('rtGistStatus').textContent='已同步到 Gist：'+(j.html_url||'')+'（'+new Date().toLocaleString('zh-CN')+'）';
+    if(j.owner && j.owner.login){ try{ localStorage.setItem(LS_GIST_OWNER, j.owner.login); }catch(e){} }
+    try{ localStorage.setItem(LS_GIST_UPDATED, String(Date.now())); }catch(e){}
+    $('rtGistStatus').textContent='已同步到 Gist：'+(j.html_url||'')+'（'+rtFmtTime(Date.now())+'）';
     toast('已同步到 Gist');
+    renderRouting(true);
   }catch(e){
     $('rtGistStatus').textContent='同步失败：'+(e.message||e)+'。检查令牌是否有 gist 权限、Gist ID 是否正确。';
     toast('同步失败');
@@ -1037,8 +1241,152 @@ function rtMaybeAutoSync(){
     var t=localStorage.getItem(LS_GIST_TOKEN); if(t) $('rtGistToken').value=t;
     var g=localStorage.getItem(LS_GIST_ID); if(g) $('rtGistId').value=g;
     $('rtGistAuto').checked=localStorage.getItem(LS_GIST_AUTO)==='1';
+    var d=localStorage.getItem(LS_RT_DEST); if(d) $('rtSyncDest').value=d;
   }catch(e){}
 })();
+
+// ---- 分组编辑器 ----
+function rtEdRow(labelText, el){
+  var row=document.createElement('div');
+  row.className='rt-ed-row';
+  var lab=document.createElement('span');
+  lab.textContent=labelText;
+  row.appendChild(lab);
+  row.appendChild(el);
+  return row;
+}
+function rtRenderGroupEditor(){
+  var groups=rtGetGroups();
+  var box=$('rtGroupEditor');
+  box.innerHTML='';
+  groups.forEach(function(g, idx){
+    var isFallback=g.id==='fallback';
+    var card=document.createElement('div');
+    card.className='rt-ed-group';
+    var top=document.createElement('div');
+    top.className='rt-ed-top';
+    var nameIn=document.createElement('input');
+    nameIn.type='text'; nameIn.className='rt-ed-name'; nameIn.value=g.name;
+    nameIn.onchange=function(){
+      var v=nameIn.value.trim();
+      if(!v){ nameIn.value=g.name; return; }
+      var cur=rtGetGroups();
+      cur[idx].name=v;
+      rtSaveGroups(cur);
+      rtRenderGroupEditor();
+    };
+    top.appendChild(nameIn);
+    if(!isFallback){
+      var enLab=document.createElement('label');
+      enLab.className='rt-ed-enable';
+      var enCb=document.createElement('input');
+      enCb.type='checkbox'; enCb.checked=g.enabled!==false;
+      enCb.onchange=function(){
+        var cur=rtGetGroups();
+        cur[idx].enabled=enCb.checked;
+        rtSaveGroups(cur);
+        rtRenderGroupEditor();
+      };
+      enLab.appendChild(enCb);
+      enLab.appendChild(document.createTextNode('启用'));
+      top.appendChild(enLab);
+      var up=document.createElement('button');
+      up.type='button'; up.className='mini-btn'; up.textContent='↑';
+      up.disabled=idx===0;
+      up.onclick=function(){
+        if(idx===0) return;
+        var cur=rtGetGroups();
+        var tmp=cur[idx-1]; cur[idx-1]=cur[idx]; cur[idx]=tmp;
+        rtSaveGroups(cur);
+        rtRenderGroupEditor();
+      };
+      var down=document.createElement('button');
+      down.type='button'; down.className='mini-btn'; down.textContent='↓';
+      down.disabled=idx>=groups.length-2;
+      down.onclick=function(){
+        var cur=rtGetGroups();
+        if(idx>=cur.length-2) return;
+        var tmp=cur[idx+1]; cur[idx+1]=cur[idx]; cur[idx]=tmp;
+        rtSaveGroups(cur);
+        rtRenderGroupEditor();
+      };
+      top.appendChild(up); top.appendChild(down);
+    } else {
+      var fbTag=document.createElement('span');
+      fbTag.className='rt-ed-enable'; fbTag.textContent='兜底';
+      top.appendChild(fbTag);
+    }
+    card.appendChild(top);
+    card.appendChild(rtEdRow('策略', (function(){
+      var s=document.createElement('select');
+      s.innerHTML='<option value="DIRECT">DIRECT（直连）</option><option value="PROXY">Proxy（代理）</option>';
+      s.value=g.policy;
+      s.onchange=function(){
+        var cur=rtGetGroups();
+        cur[idx].policy=s.value;
+        rtSaveGroups(cur);
+        rtRenderGroupEditor();
+      };
+      return s;
+    })()));
+    card.appendChild(rtEdRow('QX', (function(){
+      var s=document.createElement('select');
+      s.innerHTML='<option value="follow">跟随策略</option><option value="DIRECT">DIRECT</option><option value="PROXY">Proxy</option>';
+      s.value=g.qx;
+      s.onchange=function(){
+        var cur=rtGetGroups();
+        cur[idx].qx=s.value;
+        rtSaveGroups(cur);
+        rtRenderGroupEditor();
+      };
+      return s;
+    })()));
+    if(!isFallback){
+      card.appendChild(rtEdRow('关键词', (function(){
+        var inp=document.createElement('input');
+        inp.type='text'; inp.value=g.keywords.join(' ');
+        inp.placeholder='空格分隔，例如：直连 直链 direct';
+        inp.onchange=function(){
+          var kws=inp.value.split(/[,，、\s]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+          var cur=rtGetGroups();
+          cur[idx].keywords=kws;
+          rtSaveGroups(cur);
+          rtRenderGroupEditor();
+        };
+        return inp;
+      })()));
+    }
+    card.appendChild(rtEdRow('匹配', (function(){
+      var seg=document.createElement('div');
+      seg.className='rt-seg';
+      ['DOMAIN','DOMAIN-SUFFIX'].forEach(function(m){
+        var b=document.createElement('button');
+        b.type='button'; b.textContent=m;
+        if(g.match===m) b.className='on';
+        b.onclick=function(){
+          var cur=rtGetGroups();
+          cur[idx].match=m;
+          rtSaveGroups(cur);
+          rtRenderGroupEditor();
+        };
+        seg.appendChild(b);
+      });
+      return seg;
+    })()));
+    box.appendChild(card);
+  });
+}
+$('btnRtEditGroups').onclick=function(){
+  rtRenderGroupEditor();
+  $('rtGroupModal').style.display='flex';
+};
+$('btnRtGroupDone').onclick=function(){
+  $('rtGroupModal').style.display='none';
+  renderRouting(true);
+};
+$('rtGroupModal').addEventListener('click', function(e){
+  if(e.target===$('rtGroupModal')) $('rtGroupModal').style.display='none';
+});
 
 // 记住名称/用户名（不记密码）；线路单独存 embyimp_routes
 ['name','username'].forEach(function(k){
