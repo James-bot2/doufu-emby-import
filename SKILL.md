@@ -49,10 +49,10 @@ Default port when the user omits one: `443` for https, `80` for http.
 Source: format supplied by the user (2026-11-06). This is a **universal link** (https), not a custom scheme — the earlier `eplayerx://importserver` only opened the app without showing the add-server page. Supporting evidence: the macOS build (repo `liixing/eplayerx`, v1.2.35) registers scheme `eplayerx` only for callback-style paths (`trakt/callback`, `baidu-callback`, `guangya-callback`, `infuse-success/error`, `pending-emby`) plus an `AddServerDeepLink` type — there is no `importserver` route.
 
 ```
-https://eplayerx.com/add-or-update?type=emby&href=<full URL>&username=<user>&password=<pass>
+https://eplayerx.com/add-or-update?type=emby&href=<full URL>&username=<user>
 ```
 
-No `name` parameter.
+No `name` parameter. Since 2026-11-10 the password is NOT included: EplayerX is an https universal link, so a password in the query string would land in eplayerx.com's server logs. The user types the password in the app once. The other 13 apps use local custom schemes, so their passwords never leave the device.
 
 ### Vidora — ✅ confirmed
 
@@ -310,6 +310,7 @@ The site behaves like a standalone app when added to the home screen (user: "添
 - 2026-11-06: VidHub, Lenna, Afusekt, Streama added — user-supplied chilledmelon templates + icons (VidHub = `vidhub://import?...&address=&scheme=&host=&port=&username=&password=`; Lenna = `lenna://emby/import?server_url=&server_path=&username=&password=&name=`; Afusekt = `afusekt://media.server?address=&account=&password=&type=emby`; Streama = `streama://importserver?type=emby&name=&address=&username=&password=`). Icons verified against App Store artwork: VidHub = id 1659622164 (green S, not vidhub.app's orange icon), Lenna = id 6502967807, Afusekt = id 6760249287; Streama's icon assigned by elimination (does not match the App Store Streama artwork).
 - 2026-11-06: CapyPlayer added — user-supplied format `com.feifeiduck.capyplayer://add-resource?data=<base64 JSON>` + user-supplied capybara icon. First implemented from the user's printf example (standard base64, no credentials — tile briefly said 「需手动登录」); then corrected from the official docs (https://capyplayer.feifeiduck.com/en/dev/widget/deep_links): encoding is base64url, and username/password/path are supported optional fields, so credentials import and the tile is back to 「一键导入」.
 - 2026-11-08: DenPlayer added — user-supplied format `denplayer://emby/import?server_url=<full address>&server_path=&username=&password=&name=` + user-supplied clapperboard icon (640px → 128px JPEG). `server_url` is the full address, `server_path` always empty. Page is now 14 tiles; hero updated to 「14 个播放器」. Deployed live and verified (200, all 14 formats present).
+- 2026-11-10: EplayerX password removed from its link — it is an https universal link, so the password in the query string would land in eplayerx.com's server logs (the other 13 apps use local custom schemes). The link now carries only href + username; the user types the password in EplayerX once. Deployed live and synced to GitHub. localStorage saved-servers password kept, by the user's explicit choice.
 - 2026-11-06: hold-to-burn reveal added (user: 「我非常喜欢这个交互」) — the form card hid behind an ash veil; holding 「🔥 按住点燃」 burned a radial hole from the center (GSAP tween + rAF fallback, flame-ring SVG + ember canvas). Same day the user cancelled it (「感觉很卡取消燃烧」) — laggy on their phone. The entire burn (veil, ignite, ring, canvas, GSAP) was removed; the form is back to always-visible and index.html is back to its pre-burn size. Performance on the user's device outranks theatre.
 - 2026-11-06: footer thanks line added (user request): "💗 感谢奥斯卡卡的鼎力协助" under the trust line.
 - 2026-11-06: Add to Home Screen (PWA) — pink play-triangle home-screen icon (PIL gradient), manifest.json + icon routes served by the Worker, standalone meta tags; `build.py` now builds worker.js (replaces the inline snippet). iOS caveat: standalone web apps have separate storage from Safari, so saved servers don't carry over.
