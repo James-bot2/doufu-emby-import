@@ -116,6 +116,14 @@
   .apps-sub{font-size:14px;color:var(--muted);margin-top:6px;margin-bottom:16px}
   #routing{margin:32px 2px 0}
   .rt-sec-label{font-size:13px;font-weight:600;color:var(--muted);margin:18px 4px 8px}
+  /* 分流同步教程（可折叠，默认收起） */
+  .rt-howto{border:1px solid var(--hairline);border-radius:var(--radius-sm);background:var(--surface);padding:12px 14px;margin:4px 0 2px}
+  .rt-howto summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--ink);list-style:none}
+  .rt-howto summary::-webkit-details-marker{display:none}
+  .rt-howto ol{margin:12px 0 0;padding-left:20px;font-size:14px;line-height:1.75;color:var(--ink)}
+  .rt-howto ol li{margin-bottom:8px}
+  .rt-howto ol li:last-child{margin-bottom:0}
+  .rt-howto code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:var(--field);padding:1px 5px;border-radius:5px}
   .rt-manage-row{display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:13px 4px;cursor:pointer;font-size:16px;color:var(--accent);font-weight:600;text-align:left}
   .rt-manage-row+.rt-manage-row{border-top:1px solid var(--hairline)}
   .rt-manage-row:active{background:var(--accent-soft)}
@@ -280,6 +288,18 @@
   <section id="routing" aria-label="分流同步">
     <h2 class="apps-title">分流同步</h2>
     <p class="apps-sub">从已保存的服务器线路生成代理规则，按关键词分组</p>
+    <details class="rt-howto">
+      <summary>📖 怎么用分流同步</summary>
+      <ol>
+        <li><b>先保存服务器。</b>在一键导入页填好 Emby 服务器并保存，分流规则就是从已保存服务器的线路里按域名生成的。</li>
+        <li><b>看分组。</b>线路按名字里的关键词自动分进四组：直连（名字带 直连 / 直链 / direct）、代理（代理 / 中转 / 加速 / relay / proxy）、CF 线路（cf / cloudflare / 优选 / 官方）、兜底（没命中关键词的都进这里，后缀匹配）。每组显示策略和命中了几个域名。</li>
+        <li><b>改分组。</b>点开一组就能改：关键词框里直接输词，比如在代理组里输 <code>美国 日本 新加坡</code>，名字带这些词的线路就进代理组；策略框里填你代理软件里的策略组名，比如 Surge 里的 <code>新加坡手动</code>、<code>美国</code>，填 Proxy 就是通用代理；点 <code>DOMAIN ⇄</code> 胶囊切换精确还是后缀匹配。</li>
+        <li><b>单条线路。</b>点某条域名后的策略徽章，在这组策略和直连之间切换；点 <code>DOMAIN / DOMAIN-SUFFIX</code> 胶囊改这条的匹配方式，只影响这条域名。</li>
+        <li><b>生成规则。</b>勾选要用的软件，点「⬇ 下载全部」或每行单独下载 / 复制，然后导入到对应的代理软件：Surge 导入 <code>.sgmodule</code>（通用 Proxy 时在模块里改 EmbyProxy 参数）；Shadowrocket 导入 <code>.sgmodule</code>；Egern 导入 YAML 规则文件；Loon 导入 <code>.plugin</code>（在插件详情里选策略组）；Quantumult X 导入 <code>.list</code>；Stash / Clash 把 YAML 当规则集导入。</li>
+        <li><b>同步到 Gist（可选）。</b>在 GitHub 建一个带 <code>gist</code> 权限的令牌，粘贴到页面下方的令牌框，点「同步到 Gist」，规则会写进一个私有 Gist；同步成功后「一键导入（Gist）」区会给出每个文件的地址，复制到代理软件里直接导入（GitHub 约 5 分钟缓存）。</li>
+        <li><b>隐私。</b>同步到 Gist 的只有域名，不含账号密码；令牌只存在本机浏览器，只发给 api.github.com；保存的服务器和密码从不上传。</li>
+      </ol>
+    </details>
     <div class="rt-sec-label">线路管理</div>
     <div class="card">
       <button type="button" id="btnRtBatch" class="rt-manage-row"><span class="rt-manage-ico">☰</span><span class="rt-manage-text">批量管理线路 / 调整策略组</span><span class="rt-chev">›</span></button>
