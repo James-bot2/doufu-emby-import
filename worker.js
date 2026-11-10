@@ -38,11 +38,18 @@ const HTML = `<!DOCTYPE html>
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{overflow-x:hidden}
-  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC','Hiragino Sans GB',sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;padding:calc(28px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC','Hiragino Sans GB',sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;padding:calc(28px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;overflow-x:hidden}
   ::selection{background:#F9A8D4;color:#2A1D21}
   @media (prefers-color-scheme:dark){ ::selection{background:#9D174D;color:#FDF2F7} }
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .wrap{max-width:560px;margin:0 auto;position:relative;z-index:1}
+  /* 底部切换栏：一键导入 / 分流同步（固定底栏，内容底边已留出 96px） */
+  #view-import[hidden], #view-routing[hidden]{display:none}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);border-top:1px solid var(--hairline);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar-inner{display:flex;width:100%;max-width:560px;margin:0 auto}
+  .tabbar button{flex:1;border:none;background:none;padding:9px 0 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit}
+  .tabbar button .tab-ic{font-size:20px;line-height:1}
+  .tabbar button.active{color:var(--accent)}
   .hero{margin:4px 2px 32px}
   h1{font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
   h1 .accent-word{color:var(--accent)}
@@ -217,6 +224,8 @@ const HTML = `<!DOCTYPE html>
 </head>
 <body>
 <div class="wrap">
+  <!-- 一键导入页 -->
+  <div id="view-import">
   <header class="hero">
     <h1>Emby <span class="accent-word">一键导入</span></h1>
     <p class="sub">填一次服务器信息，14 个播放器都能一键导入。信息只在你手机本地生成链接，不会上传到任何服务器。</p>
@@ -264,7 +273,10 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <section id="apps" aria-label="一键导入"></section>
+  </div><!-- /view-import -->
 
+  <!-- 分流同步页 -->
+  <div id="view-routing" hidden>
   <section id="routing" aria-label="分流同步">
     <h2 class="apps-title">分流同步</h2>
     <p class="apps-sub">从已保存的服务器线路生成代理规则，按关键词分组</p>
@@ -318,7 +330,9 @@ const HTML = `<!DOCTYPE html>
       <p class="saved-note" id="rtGistStatus">令牌只存在本机浏览器，只发给 api.github.com，不经过本站服务器。没有令牌时先在 GitHub 创建一个带 gist 权限的令牌。</p>
     </div>
   </section>
+  </div><!-- /view-routing -->
 
+  <!-- 分组编辑 / 批量管理 / 整库测速弹窗（固定定位，不属于任一视图） -->
   <div id="rtGroupModal" class="rt-modal" style="display:none" role="dialog" aria-label="编辑分组">
     <div class="rt-modal-card">
       <div class="rt-modal-head">
@@ -371,6 +385,15 @@ const HTML = `<!DOCTYPE html>
   <p class="foot">💗 感谢奥斯卡卡的鼎力协助</p>
 
 </div>
+
+<!-- 底部切换栏：一键导入 / 分流同步 -->
+<nav class="tabbar" aria-label="页面切换">
+  <div class="tabbar-inner">
+    <button type="button" data-view="import" class="active" aria-current="page"><span class="tab-ic">⬇️</span><span>一键导入</span></button>
+    <button type="button" data-view="routing"><span class="tab-ic">🔀</span><span>分流同步</span></button>
+  </div>
+</nav>
+
 <div class="toast" id="toast"></div>
 
 <!-- 策略名候选（可手动填任意策略组名；国家来自用户的 Surge 策略组） -->
@@ -1849,6 +1872,34 @@ $('togglePw').onclick=function(){
 };
 render();
 renderRouting(true);
+
+// ---- 底部切换栏：一键导入 / 分流同步（两个视图，同一页内切换） ----
+var LS_VIEW='embyimp_view';
+function setView(v, push){
+  var isRt=v==='routing';
+  $('view-import').hidden=isRt;
+  $('view-routing').hidden=!isRt;
+  document.querySelectorAll('.tabbar button').forEach(function(b){
+    var on=b.dataset.view===v;
+    b.classList.toggle('active', on);
+    if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+  try{ localStorage.setItem(LS_VIEW, v); }catch(e){}
+  if(push!==false){ try{ history.replaceState(null,'','#'+v); }catch(e){} }
+  if(isRt) renderRouting(true);
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.tabbar button').forEach(function(b){
+  b.onclick=function(){ setView(b.dataset.view); };
+});
+// 初始视图：#routing 优先，其次上次停留的视图，否则一键导入
+var startView='import';
+try{
+  if(location.hash==='#routing') startView='routing';
+  else if(location.hash==='#import') startView='import';
+  else if(localStorage.getItem(LS_VIEW)==='routing') startView='routing';
+}catch(e){}
+setView(startView, false);
 
 </script>
 </body>
