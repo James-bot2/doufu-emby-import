@@ -276,7 +276,7 @@
     <input id="username" type="text" placeholder="Emby 用户名" autocomplete="off" autocapitalize="off">
     <label>密码</label>
     <div class="pw-row">
-      <input id="password" type="password" placeholder="Emby 密码" autocomplete="off">
+      <input id="password" type="password" placeholder="Emby 密码" autocomplete="new-password">
       <button type="button" id="togglePw">显示</button>
     </div>
   </div>
@@ -339,7 +339,7 @@
         <p class="saved-note">导入或复制地址前先同步上传，成功后才提供链接。只上传域名，不含账号密码；GitHub 约 5 分钟缓存。</p>
       </div>
       <label>自动同步到 Gist</label>
-      <input id="rtGistToken" type="password" placeholder="GitHub 令牌（需要 gist 权限）" autocomplete="off" autocapitalize="off">
+      <input id="rtGistToken" type="password" placeholder="GitHub 令牌（需要 gist 权限）" autocomplete="new-password" autocapitalize="off">
       <div class="saved-row" style="margin-top:8px">
         <input id="rtGistId" type="text" placeholder="Gist ID（首次同步后自动填入）" autocomplete="off" autocapitalize="off">
         <button type="button" id="btnRtGist" class="mini-btn">同步到 Gist</button>
