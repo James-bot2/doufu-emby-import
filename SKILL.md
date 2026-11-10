@@ -303,6 +303,13 @@ Added 2026-11-06 (user request). A 「已保存的服务器」 dropdown above th
    ```
 5. Verify live: `curl https://embyimport.example.com/` returns 200 and contains the changed feature (e.g. `btnPaste`, the new link format, the new icon's base64 marker). Verify the four confirmed link formats are present in the served page.
 
+## GitHub sync (public repo https://github.com/James-bot2/doufu-emby-import)
+
+- The repo is public and must contain only fake examples — never the real deploy domain, real server addresses, tokens or passwords. Before every push, grep the files for the real domain and scrub it (the repo SKILL.md once carried the real domain in the deploy workflow and domain history; it is scrubbed to `embyimport.example.com`).
+- Push through the `custom.github` connector, never with a raw token. The helper `~/workspace/custom-connectors/custom.github/bin/gh_push_commit.py <repo-dir> <owner/repo> <branch> [commit-sha]` replicates one local commit via the Git Data API (same message, parent and contents; the pushed SHA differs from the local one). It aborts when the remote branch is not at the local commit's parent.
+- The helper sets author and committer to the anonymous address `James-bot2 <181863722+James-bot2@users.noreply.github.com>`. The API otherwise defaults both to the token owner's real email, which once leaked into a public commit and had to be fixed with a replacement commit. Verify author and committer after every push.
+- The local source of truth (`~/workspace/emby-import/`) is not a git repo; clone to /tmp, copy the changed files in, commit with the anonymous author, then push with the helper — and do the clone, commit and push in one turn, because /tmp is ephemeral.
+
 ## Add to Home Screen (PWA, 2026-11-06)
 
 The site behaves like a standalone app when added to the home screen (user: "添加到桌面可以打包成软件那种吗").
