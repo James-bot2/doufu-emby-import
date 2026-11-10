@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | SenPlayer | ✅ 已确认 | `senplayer://importserver?...` |
 | Rex | ✅ 已确认 | `rex://import?...` |
-| EplayerX | ✅ 已确认 | `https://eplayerx.com/add-or-update?...`（通用链接；密码不进链接，在 App 里输一次） |
+| EplayerX | ✅ 已确认 | `https://eplayerx.com/add-or-update?...`（通用链接） |
 | Vidora | ✅ 已确认 | `vidora://emby/import?...` |
 | Noctra | ✅ 已确认 | `noctra://server/import?...`，打开后进核对页，点「导入所选」才连接保存 |
 | 小幻影视 | ✅ 已确认 | `rodelplayer://import?...`（官方协议链接），导入前会弹确认框；**仅支持 Windows**，iPhone 上点它没反应 |
