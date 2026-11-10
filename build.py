@@ -37,6 +37,24 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === '/health') return new Response('emby-import ok', { status: 200 });
+    if (url.pathname === '/speed') {
+      // 线路测速代理：只允许测 Emby 公开接口 /System/Info/Public 或根路径，只等响应头，不读响应体。
+      const target = url.searchParams.get('url') || '';
+      const cors = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' };
+      try {
+        const u = new URL(target);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('bad protocol');
+        if (!(u.pathname.endsWith('/System/Info/Public') || u.pathname.endsWith('/'))) throw new Error('bad path');
+        const t0 = Date.now();
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(u.toString(), { method: 'GET', signal: ctrl.signal, redirect: 'manual' });
+        clearTimeout(to);
+        return new Response(JSON.stringify({ ok: true, ms: Date.now() - t0, status: res.status }), { headers: cors });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: (e && e.name === 'AbortError') ? '超时' : '无法连接' }), { headers: cors });
+      }
+    }
     if (url.pathname === '/manifest.json') return new Response(JSON.stringify(MANIFEST), { headers: { 'Content-Type': 'application/manifest+json', 'Cache-Control': 'no-store' } });
     if (url.pathname === '/apple-touch-icon.png') return new Response(b64ToBytes(ICON180), { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' } });
     if (url.pathname === '/icon-192.png') return new Response(b64ToBytes(ICON192), { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' } });
