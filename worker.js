@@ -136,6 +136,7 @@ const HTML = `<!DOCTYPE html>
   .rt-gdetail{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);font-size:15px}
   .rt-gdetail>span{color:var(--muted)}
   .rt-gdetail button{border:none;background:none;color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;padding:4px 0}
+  .rt-gtext{flex:1;min-width:0;min-height:38px;padding:8px 10px;font-size:14px;text-align:right}
   .rt-gnote{font-size:13px;color:var(--muted);line-height:1.6;padding:10px 0 2px;border-top:1px solid var(--hairline)}
   .rt-gkw-edit{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);font-size:15px}
   .rt-gkw-edit>span{flex:none;color:var(--muted)}
@@ -298,7 +299,7 @@ const HTML = `<!DOCTYPE html>
           </select>
         </div>
         <button type="button" id="btnRtSync" class="paste-btn" style="margin-top:12px;margin-bottom:0">↻ 立即同步</button>
-        <p class="saved-note">Surge 模块带参数 EmbyProxy，导入后在模块里就能改策略；Loon 插件在插件详情里选策略组；Shadowrocket / Egern 直接使用各分组和「兜底」里填的策略。</p>
+        <p class="saved-note">策略可填任意策略组名（如 新加坡手动、美国）：通用 Proxy 时 Surge 模块用 EmbyProxy 参数，导入后在模块里就能改；填了具体名字时会直接用那个名字。Loon 插件在插件详情里选策略组；Shadowrocket / Egern 直接使用各分组和「兜底」里填的策略。</p>
       </div>
       <div id="rtImport" style="display:none">
         <label>一键导入（Gist）</label>
@@ -371,6 +372,39 @@ const HTML = `<!DOCTYPE html>
 
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- 策略名候选（可手动填任意策略组名；国家来自用户的 Surge 策略组） -->
+<datalist id="rtPolicyList">
+  <option value="DIRECT"></option>
+  <option value="Proxy"></option>
+  <option value="新加坡"></option>
+  <option value="新加坡手动"></option>
+  <option value="日本"></option>
+  <option value="日本手动"></option>
+  <option value="韩国"></option>
+  <option value="韩国手动"></option>
+  <option value="香港"></option>
+  <option value="台湾"></option>
+  <option value="美国"></option>
+  <option value="中国"></option>
+  <option value="便宜流量"></option>
+</datalist>
+<datalist id="rtQxList">
+  <option value="跟随策略"></option>
+  <option value="DIRECT"></option>
+  <option value="Proxy"></option>
+  <option value="新加坡"></option>
+  <option value="新加坡手动"></option>
+  <option value="日本"></option>
+  <option value="日本手动"></option>
+  <option value="韩国"></option>
+  <option value="韩国手动"></option>
+  <option value="香港"></option>
+  <option value="台湾"></option>
+  <option value="美国"></option>
+  <option value="中国"></option>
+  <option value="便宜流量"></option>
+</datalist>
 
 <script>
 var APPS = [
@@ -886,6 +920,32 @@ var rtExpanded={}; // groupId -> bool
 var rtLastSig='';
 var rtLastContentSig='';
 
+// 策略名可手动填：DIRECT（直连）、Proxy（通用代理）或任意策略组名（如 新加坡手动、美国）。
+// 存的是规范值：'DIRECT' / 'PROXY' / 自定义名原文；显示时 PROXY 写作 Proxy。
+// 国家/策略名候选（图里用户的 Surge 策略组）：新加坡、新加坡手动、日本、日本手动、韩国、韩国手动、香港、台湾、美国、中国、便宜流量。
+function rtNormPolicy(v, def){
+  var s=String(v==null?'':v).trim();
+  if(!s) return def||'PROXY';
+  var low=s.toLowerCase();
+  if(low==='direct') return 'DIRECT';
+  if(low==='proxy') return 'PROXY';
+  return s;
+}
+function rtNormQx(v){
+  var s=String(v==null?'':v).trim();
+  if(!s) return 'follow';
+  var low=s.toLowerCase();
+  if(low==='follow'||low==='跟随'||low==='跟随策略') return 'follow';
+  if(low==='direct') return 'DIRECT';
+  if(low==='proxy') return 'PROXY';
+  return s;
+}
+function rtPolicyLabel(p){
+  if(p==='DIRECT') return 'DIRECT';
+  if(p==='PROXY') return 'Proxy';
+  return p||'Proxy';
+}
+
 function rtGetGroups(){
   var raw=null;
   try{ raw=JSON.parse(localStorage.getItem(LS_RT_GROUPS)||'null'); }catch(e){}
@@ -900,8 +960,8 @@ function rtGetGroups(){
         id:g.id,
         name:(typeof g.name==='string'&&g.name.trim())?g.name.trim():d.name,
         enabled:g.enabled!==false,
-        policy:g.policy==='DIRECT'?'DIRECT':'PROXY',
-        qx:(g.qx==='DIRECT'||g.qx==='PROXY')?g.qx:'follow',
+        policy:rtNormPolicy(g.policy, d.policy),
+        qx:rtNormQx(g.qx),
         keywords:Array.isArray(g.keywords)?g.keywords.filter(function(s){ return typeof s==='string'&&s.trim(); }):d.keywords.slice(),
         match:g.match==='DOMAIN-SUFFIX'?'DOMAIN-SUFFIX':'DOMAIN'
       });
@@ -994,11 +1054,19 @@ function rtBuildEntries(){
 // Egern 的策略组名是 Proxy（首字母大写）；QX 用分组的 QX 设置（跟随则与分组策略一致）。
 function rtPolicyFor(fmt, e){
   var p=e.policy;
-  if(fmt==='surge') return p==='DIRECT'?'DIRECT':'%EmbyProxy%';
-  if(fmt==='egern') return p==='DIRECT'?'DIRECT':'Proxy';
-  if(fmt==='qx') return (e.qxPolicy||p)==='DIRECT'?'DIRECT':'PROXY';
-  if(fmt==='loon') return p==='DIRECT'?'DIRECT':'PROXY';
-  return p;
+  if(p==='DIRECT') return 'DIRECT';
+  // 通用 Proxy：Surge 用 %EmbyProxy% 参数（模块里可改），Egern 写作 Proxy；
+  // 自定义策略名（如 新加坡手动、美国）按原样写进规则；Loon 非直连统一 PROXY。
+  if(fmt==='surge') return p==='PROXY'?'%EmbyProxy%':p;
+  if(fmt==='egern') return p==='PROXY'?'Proxy':p;
+  if(fmt==='loon') return 'PROXY';
+  if(fmt==='qx'){
+    var q=e.qxPolicy||p;
+    if(q==='DIRECT') return 'DIRECT';
+    if(q==='PROXY') return 'PROXY';
+    return q;
+  }
+  return p==='PROXY'?'PROXY':p;
 }
 function rtBuildRules(tool, entries){
   var fmt=tool.fmt;
@@ -1063,7 +1131,13 @@ function rtCyclePolicy(host){
   var ov=rtGetOverrides();
   var cur=ov[host.host]||{};
   var effective=cur.policy||host.group.policy;
-  var next=effective==='DIRECT'?'PROXY':'DIRECT';
+  // 在分组策略和 DIRECT 之间切换（分组是 DIRECT 时切到通用 Proxy）
+  var next;
+  if(effective===host.group.policy){
+    next=host.group.policy==='DIRECT'?'PROXY':'DIRECT';
+  } else {
+    next=host.group.policy;
+  }
   if(next===host.group.policy) delete cur.policy; else cur.policy=next;
   if(!cur.policy && !cur.type) delete ov[host.host]; else ov[host.host]=cur;
   rtSaveOverrides(ov);
@@ -1087,20 +1161,18 @@ function rtToggleGroupMatch(g){
   }
   rtSaveGroups(groups);
 }
-function rtCycleGroupPolicy(g){
+// 分组策略 / QX 策略现在是文本输入（见展开行与编辑器），不再用点按切换；保留按名保存的入口
+function rtSetGroupPolicy(g, value){
   var groups=rtGetGroups();
   for(var i=0;i<groups.length;i++){
-    if(groups[i].id===g.id){ groups[i].policy=groups[i].policy==='DIRECT'?'PROXY':'DIRECT'; break; }
+    if(groups[i].id===g.id){ groups[i].policy=rtNormPolicy(value, groups[i].policy); break; }
   }
   rtSaveGroups(groups);
 }
-function rtCycleGroupQx(g){
+function rtSetGroupQx(g, value){
   var groups=rtGetGroups();
   for(var i=0;i<groups.length;i++){
-    if(groups[i].id===g.id){
-      groups[i].qx=groups[i].qx==='follow'?'DIRECT':(groups[i].qx==='DIRECT'?'PROXY':'follow');
-      break;
-    }
+    if(groups[i].id===g.id){ groups[i].qx=rtNormQx(value); break; }
   }
   rtSaveGroups(groups);
 }
@@ -1149,8 +1221,8 @@ function rtRenderBatch(){
       +'<div class="rt-batch-host">'+escapeHtml(r.host)+(r.server?' · '+escapeHtml(r.server):'')+'</div>';
     var pol=document.createElement('button');
     pol.type='button'; pol.className='rt-badge'+(res.policy==='DIRECT'?' direct':'')+(res.overridden?'':' auto');
-    pol.textContent=res.policy==='DIRECT'?'DIRECT':'Proxy';
-    pol.title='点此切换直连 / 代理';
+    pol.textContent=rtPolicyLabel(res.policy);
+    pol.title='点此切换直连 / 分组策略';
     pol.onclick=function(){ rtCyclePolicy({host:r.host, group:res.group}); rtRenderBatch(); };
     row.appendChild(cb); row.appendChild(info); row.appendChild(pol);
     list.appendChild(row);
@@ -1342,7 +1414,7 @@ function renderRouting(force){
     main.className='rt-gmain';
     var line1=document.createElement('div');
     line1.className='rt-gline1';
-    line1.innerHTML='<b>'+escapeHtml(g.name)+'</b><span class="rt-garrow">→</span><span class="rt-gpol">'+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'</span>';
+    line1.innerHTML='<b>'+escapeHtml(g.name)+'</b><span class="rt-garrow">→</span><span class="rt-gpol">'+escapeHtml(rtPolicyLabel(g.policy))+'</span>';
     main.appendChild(line1);
     var cap=document.createElement('button');
     cap.type='button'; cap.className='rt-gcapsule';
@@ -1380,8 +1452,8 @@ function renderRouting(force){
         +'<div class="rt-host-label">'+escapeHtml(h.label||h.server||'')+'</div>';
       var pol=document.createElement('button');
       pol.type='button'; pol.className='rt-badge'+(h.policy==='DIRECT'?' direct':'')+((rtGetOverrides()[h.host]||{}).policy?'':' auto');
-      pol.textContent=h.policy==='DIRECT'?'DIRECT':'Proxy';
-      pol.title='点此切换直连 / 代理';
+      pol.textContent=rtPolicyLabel(h.policy);
+      pol.title='点此切换直连 / 分组策略';
       pol.onclick=function(){ rtCyclePolicy(h); };
       var typ=document.createElement('button');
       typ.type='button'; typ.className='rt-type';
@@ -1391,25 +1463,30 @@ function renderRouting(force){
       row.appendChild(info); row.appendChild(pol); row.appendChild(typ);
       hostsEl.appendChild(row);
     });
-    // 策略 / QX 策略（展开可见，点值切换）
+    // 策略 / QX 策略：可手动填的文本输入（带候选：DIRECT、Proxy、各国/策略名），失焦/回车即保存
     var polRow=document.createElement('div');
     polRow.className='rt-gdetail';
-    var polBtn=document.createElement('button');
-    polBtn.type='button'; polBtn.textContent=g.policy==='DIRECT'?'DIRECT':'Proxy';
-    polBtn.title='点此切换直连 / 代理';
-    polBtn.onclick=function(){ rtCycleGroupPolicy(g); };
+    var polIn=document.createElement('input');
+    polIn.type='text'; polIn.className='rt-gtext';
+    polIn.setAttribute('list','rtPolicyList');
+    polIn.setAttribute('autocomplete','off'); polIn.setAttribute('autocapitalize','off'); polIn.setAttribute('spellcheck','false');
+    polIn.value=rtPolicyLabel(g.policy);
+    polIn.placeholder='策略名，如 Proxy';
+    polIn.onchange=function(){ rtSetGroupPolicy(g, polIn.value); };
     polRow.appendChild(Object.assign(document.createElement('span'), { textContent:'策略' }));
-    polRow.appendChild(polBtn);
+    polRow.appendChild(polIn);
     hostsEl.appendChild(polRow);
     var qxRow=document.createElement('div');
     qxRow.className='rt-gdetail';
-    var qxBtn=document.createElement('button');
-    qxBtn.type='button';
-    qxBtn.textContent=g.qx==='follow' ? ('跟随「'+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'」') : g.qx;
-    qxBtn.title='点此切换 QX 策略';
-    qxBtn.onclick=function(){ rtCycleGroupQx(g); };
+    var qxIn=document.createElement('input');
+    qxIn.type='text'; qxIn.className='rt-gtext';
+    qxIn.setAttribute('list','rtQxList');
+    qxIn.setAttribute('autocomplete','off'); qxIn.setAttribute('autocapitalize','off'); qxIn.setAttribute('spellcheck','false');
+    qxIn.value=g.qx==='follow'?'':rtPolicyLabel(g.qx);
+    qxIn.placeholder='跟随「'+rtPolicyLabel(g.policy)+'」';
+    qxIn.onchange=function(){ rtSetGroupQx(g, qxIn.value); };
     qxRow.appendChild(Object.assign(document.createElement('span'), { textContent:'QX 策略' }));
-    qxRow.appendChild(qxBtn);
+    qxRow.appendChild(qxIn);
     hostsEl.appendChild(qxRow);
     // 关键词输入框：直接在组里改，失焦/回车即保存并重新分组
     var kwEdit=document.createElement('div');
@@ -1680,28 +1757,32 @@ function rtRenderGroupEditor(){
     }
     card.appendChild(top);
     card.appendChild(rtEdRow('策略', (function(){
-      var s=document.createElement('select');
-      s.innerHTML='<option value="DIRECT">DIRECT（直连）</option><option value="PROXY">Proxy（代理）</option>';
-      s.value=g.policy;
-      s.onchange=function(){
+      var inp=document.createElement('input');
+      inp.type='text'; inp.setAttribute('list','rtPolicyList');
+      inp.setAttribute('autocomplete','off'); inp.setAttribute('autocapitalize','off'); inp.setAttribute('spellcheck','false');
+      inp.value=rtPolicyLabel(g.policy);
+      inp.placeholder='策略名，如 Proxy / 新加坡手动';
+      inp.onchange=function(){
         var cur=rtGetGroups();
-        cur[idx].policy=s.value;
+        cur[idx].policy=rtNormPolicy(inp.value, cur[idx].policy);
         rtSaveGroups(cur);
         rtRenderGroupEditor();
       };
-      return s;
+      return inp;
     })()));
     card.appendChild(rtEdRow('QX', (function(){
-      var s=document.createElement('select');
-      s.innerHTML='<option value="follow">跟随策略</option><option value="DIRECT">DIRECT</option><option value="PROXY">Proxy</option>';
-      s.value=g.qx;
-      s.onchange=function(){
+      var inp=document.createElement('input');
+      inp.type='text'; inp.setAttribute('list','rtQxList');
+      inp.setAttribute('autocomplete','off'); inp.setAttribute('autocapitalize','off'); inp.setAttribute('spellcheck','false');
+      inp.value=g.qx==='follow'?'':rtPolicyLabel(g.qx);
+      inp.placeholder='跟随策略';
+      inp.onchange=function(){
         var cur=rtGetGroups();
-        cur[idx].qx=s.value;
+        cur[idx].qx=rtNormQx(inp.value);
         rtSaveGroups(cur);
         rtRenderGroupEditor();
       };
-      return s;
+      return inp;
     })()));
     if(!isFallback){
       card.appendChild(rtEdRow('关键词', (function(){
