@@ -78,7 +78,7 @@ const HTML = `<!DOCTYPE html>
   .route-del:hover{background:rgba(220,38,38,.1);color:var(--red)}
   .route-url{width:100%;min-height:40px;font-size:15px}
   .route-actions{display:flex;gap:8px;margin-top:4px}
-  .route-actions .mini-btn{flex:1;min-height:40px}
+  .route-actions .mini-btn{flex:1;min-height:40px;white-space:nowrap;padding:0 10px}
   .route-count{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
   #speedSection{display:none;margin-top:16px}
   #speedSection.show{display:block}
@@ -108,19 +108,45 @@ const HTML = `<!DOCTYPE html>
   .apps-title{font-size:24px;font-weight:800;letter-spacing:-.3px;line-height:1.25}
   .apps-sub{font-size:14px;color:var(--muted);margin-top:6px;margin-bottom:16px}
   #routing{margin:32px 2px 0}
-  .rt-group{border:1px solid var(--hairline);border-radius:var(--radius-sm);background:var(--field);margin-bottom:8px;overflow:hidden}
-  .rt-group-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;min-height:56px}
+  .rt-sec-label{font-size:13px;font-weight:600;color:var(--muted);margin:18px 4px 8px}
+  .rt-manage-row{display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:13px 4px;cursor:pointer;font-size:16px;color:var(--accent);font-weight:600;text-align:left}
+  .rt-manage-row+.rt-manage-row{border-top:1px solid var(--hairline)}
+  .rt-manage-row:active{background:var(--accent-soft)}
+  .rt-manage-ico{flex:none;width:24px;text-align:center;font-size:17px}
+  .rt-manage-text{flex:1;min-width:0}
+  .rt-group{border-top:1px solid var(--hairline)}
+  .rt-group:first-child{border-top:none}
+  .rt-group-head{display:flex;align-items:flex-start;gap:8px;padding:12px 2px;cursor:pointer;min-height:56px}
   .rt-group-head:active{background:var(--accent-soft)}
-  .rt-ico{flex:none;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px}
-  .rt-gname{flex:1;min-width:0}
-  .rt-gname b{font-size:16px;font-weight:700}
-  .rt-gname span{display:block;font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .rt-policy{flex:none;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:999px}
-  .rt-policy.direct{color:var(--green);background:rgba(22,163,74,.12)}
+  .rt-gico{flex:none;width:24px;text-align:center;font-size:19px;line-height:1.5}
+  .rt-gico.direct{color:var(--green)}
+  .rt-gmain{flex:1;min-width:0}
+  .rt-gline1{font-size:17px;font-weight:700;line-height:1.4}
+  .rt-gline1 .rt-garrow{color:var(--muted);font-weight:400;margin:0 6px}
+  .rt-gline1 .rt-gpol{color:var(--muted);font-weight:500}
+  .rt-gcapsule{display:inline-flex;align-items:center;gap:4px;border:none;border-radius:999px;background:var(--field);color:var(--accent);font-size:13px;font-weight:700;padding:4px 10px;margin-top:6px;cursor:pointer}
+  .rt-gkw{font-size:12px;color:var(--muted);margin-top:6px}
+  .rt-gside{flex:none;display:flex;flex-direction:column;align-items:flex-end;align-self:flex-start;padding-top:2px}
+  .rt-gstatus{font-size:12px;color:var(--muted)}
+  .rt-gside .rt-chev{margin-top:10px}
   .rt-chev{flex:none;color:var(--muted);font-size:14px;transition:transform var(--m-in) var(--ease)}
   .rt-group.open .rt-chev{transform:rotate(90deg)}
-  .rt-hosts{display:none;border-top:1px solid var(--hairline);padding:6px 14px 10px}
+  .rt-hosts{display:none;border-top:1px solid var(--hairline);padding:6px 4px 10px}
   .rt-group.open .rt-hosts{display:block}
+  .rt-gdetail{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);font-size:15px}
+  .rt-gdetail>span{color:var(--muted)}
+  .rt-gdetail button{border:none;background:none;color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;padding:4px 0}
+  .rt-gnote{font-size:13px;color:var(--muted);line-height:1.6;padding:10px 0 2px;border-top:1px solid var(--hairline)}
+  .rt-edit-link{display:flex;align-items:center;gap:10px;width:100%;border:none;border-top:1px solid var(--hairline);background:none;padding:13px 4px;cursor:pointer;font-size:16px;color:var(--accent);font-weight:600;text-align:left}
+  .rt-edit-link:active{background:var(--accent-soft)}
+  .rt-batch-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);font-size:14px}
+  .rt-batch-row:first-child{border-top:none}
+  .rt-batch-row input[type=checkbox]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--accent);padding:0}
+  .rt-batch-info{flex:1;min-width:0}
+  .rt-batch-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-batch-host{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-lib-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);cursor:pointer}
+  .rt-lib-row:first-child{border-top:none}
   .rt-host{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--hairline)}
   .rt-host:first-child{border-top:none}
   .rt-host-info{flex:1;min-width:0}
@@ -141,7 +167,6 @@ const HTML = `<!DOCTYPE html>
   .rt-file-name{flex:1;min-width:0;font-weight:600;font-size:13px;line-height:1.35;word-break:break-all}
   .rt-file-meta{font-size:12px;color:var(--muted);flex:none}
   .rt-empty{font-size:14px;color:var(--muted);padding:12px 0;line-height:1.6}
-  .rt-sec-head{display:flex;justify-content:flex-end;margin-bottom:10px}
   .rt-sync{border-top:1px solid var(--hairline);margin-top:14px;padding-top:12px}
   .rt-sync-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--hairline);font-size:14px}
   .rt-sync-row:first-child{border-top:none}
@@ -239,12 +264,18 @@ const HTML = `<!DOCTYPE html>
   <section id="routing" aria-label="分流同步">
     <h2 class="apps-title">分流同步</h2>
     <p class="apps-sub">从已保存的服务器线路生成代理规则，按关键词分组</p>
+    <div class="rt-sec-label">线路管理</div>
     <div class="card">
-      <div class="rt-sec-head">
-        <button type="button" id="btnRtEditGroups" class="mini-btn">⚙️ 编辑分组（关键词 / 策略 / 顺序）</button>
-      </div>
+      <button type="button" id="btnRtBatch" class="rt-manage-row"><span class="rt-manage-ico">☰</span><span class="rt-manage-text">批量管理线路 / 调整策略组</span><span class="rt-chev">›</span></button>
+      <button type="button" id="btnRtSpeedAll" class="rt-manage-row"><span class="rt-manage-ico">📶</span><span class="rt-manage-text">整库线路测速</span><span class="rt-chev">›</span></button>
+    </div>
+    <div class="rt-sec-label">分流方式</div>
+    <div class="card">
       <div id="rtGroups"></div>
-      <p class="route-count">单线路设置优先，其余按分组顺序匹配。点行看域名，点策略切换直连 / 代理，点胶囊切换精确 / 后缀。Loon 非直连统一走 PROXY。</p>
+      <button type="button" id="btnRtEditGroups" class="rt-edit-link"><span>⚙️</span><span>编辑分组（关键词 / 策略 / 顺序）</span></button>
+    </div>
+    <p class="route-count">单线路设置优先，其余按分组顺序匹配。点行看域名，点胶囊切换精确 / 后缀。Loon 非直连统一走 PROXY。</p>
+    <div class="card" style="margin-top:12px">
       <label>生成哪些软件 <span id="rtToolCount" style="font-weight:400"></span></label>
       <div class="rt-tools" id="rtTools"></div>
       <div class="route-actions" style="margin-top:12px">
@@ -292,6 +323,43 @@ const HTML = `<!DOCTYPE html>
       </div>
       <p class="saved-note" style="margin-top:0">单线路设置优先，其余按分组顺序匹配。点行看域名，点胶囊切换精确 / 后缀。Loon 非直连统一走 PROXY。</p>
       <div id="rtGroupEditor"></div>
+    </div>
+  </div>
+
+  <div id="rtBatchModal" class="rt-modal" style="display:none" role="dialog" aria-label="批量管理线路">
+    <div class="rt-modal-card">
+      <div class="rt-modal-head">
+        <b>批量管理线路</b>
+        <button type="button" id="btnRtBatchDone" class="mini-btn">完成</button>
+      </div>
+      <p class="saved-note" style="margin-top:0">全部已保存服务器 + 当前表单的线路。勾选后批量改策略；点单个策略也可单独改。策略按域名保存，同域名线路共用。</p>
+      <div class="route-actions" style="margin-top:0">
+        <button type="button" id="btnRtBatchAll" class="mini-btn">全选</button>
+        <button type="button" id="btnRtBatchDirect" class="mini-btn">设为直连</button>
+        <button type="button" id="btnRtBatchProxy" class="mini-btn">设为代理</button>
+        <button type="button" id="btnRtBatchAuto" class="mini-btn">恢复自动</button>
+      </div>
+      <div id="rtBatchList" style="margin-top:6px"></div>
+      <div class="route-actions" style="margin-top:14px">
+        <button type="button" id="btnRtBatchEditGroups" class="mini-btn">⚙️ 编辑分组</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rtSpeedModal" class="rt-modal" style="display:none" role="dialog" aria-label="整库线路测速">
+    <div class="rt-modal-card">
+      <div class="rt-modal-head">
+        <b>整库线路测速</b>
+        <button type="button" id="btnRtSpeedDone" class="mini-btn">完成</button>
+      </div>
+      <div class="speed-head"><span id="rtSpeedStatus"></span></div>
+      <div class="speed-summary" id="rtSpeedSummary"></div>
+      <div id="rtSpeedRows"></div>
+      <div class="route-actions" style="margin-top:12px">
+        <button type="button" id="btnRtSpeedFastest" class="mini-btn" style="display:none">⚡ 用最快线路</button>
+        <button type="button" id="btnRtSpeedCopy" class="mini-btn" style="display:none">复制结果</button>
+      </div>
+      <p class="speed-note">测全部已保存服务器的线路，每条测 3 次取最快；点一行把该线路切进表单（只勾选它）。</p>
     </div>
   </div>
 
@@ -1008,6 +1076,228 @@ function rtToggleType(host){
   rtSaveOverrides(ov);
   renderRouting(true);
 }
+// 分组级切换：胶囊切精确/后缀，展开里的策略/QX 策略点值切换
+function rtToggleGroupMatch(g){
+  var groups=rtGetGroups();
+  for(var i=0;i<groups.length;i++){
+    if(groups[i].id===g.id){ groups[i].match=groups[i].match==='DOMAIN'?'DOMAIN-SUFFIX':'DOMAIN'; break; }
+  }
+  rtSaveGroups(groups);
+}
+function rtCycleGroupPolicy(g){
+  var groups=rtGetGroups();
+  for(var i=0;i<groups.length;i++){
+    if(groups[i].id===g.id){ groups[i].policy=groups[i].policy==='DIRECT'?'PROXY':'DIRECT'; break; }
+  }
+  rtSaveGroups(groups);
+}
+function rtCycleGroupQx(g){
+  var groups=rtGetGroups();
+  for(var i=0;i<groups.length;i++){
+    if(groups[i].id===g.id){
+      groups[i].qx=groups[i].qx==='follow'?'DIRECT':(groups[i].qx==='DIRECT'?'PROXY':'follow');
+      break;
+    }
+  }
+  rtSaveGroups(groups);
+}
+// 全库线路：已保存服务器的全部线路 + 当前表单勾选的线路，按 URL 去重
+function rtCollectRoutes(){
+  var out=[], seen={};
+  function add(serverName, route){
+    var p=parseAddr(route.url);
+    if(!p || !p.host) return;
+    var url=route.url.trim();
+    if(seen[url]) return;
+    seen[url]=1;
+    out.push({ server:serverName||'', name:(route.name||'').trim(), url:url, host:p.host,
+      label:(route.name||'').trim()||serverName||'' });
+  }
+  getServers().forEach(function(s){ (s.routes||[]).forEach(function(r){ add(s.name, r); }); });
+  getCheckedRoutes().forEach(function(r){ add($('name').value.trim()||'Emby', r); });
+  return out;
+}
+function rtRouteGroup(r, groups, overrides){
+  var g=rtMatchGroup((r.label||'')+' '+(r.server||''), groups);
+  var res=rtResolve({host:r.host}, g, overrides);
+  return { group:g, policy:res.policy, overridden:res.overridden };
+}
+// ---- 批量管理线路 ----
+var rtBatchSel={}; // url -> true
+function rtRenderBatch(){
+  var list=$('rtBatchList');
+  var routes=rtCollectRoutes();
+  var groups=rtGetGroups(), overrides=rtGetOverrides();
+  list.innerHTML='';
+  if(!routes.length){
+    list.innerHTML='<p class="rt-empty">还没有线路。先在上面填 Emby 线路并点「💾 保存」。</p>';
+    return;
+  }
+  routes.forEach(function(r){
+    var res=rtRouteGroup(r, groups, overrides);
+    var row=document.createElement('div');
+    row.className='rt-batch-row';
+    var cb=document.createElement('input');
+    cb.type='checkbox'; cb.checked=!!rtBatchSel[r.url];
+    cb.onchange=function(){ if(cb.checked) rtBatchSel[r.url]=1; else delete rtBatchSel[r.url]; };
+    var info=document.createElement('div');
+    info.className='rt-batch-info';
+    info.innerHTML='<div class="rt-batch-name">'+escapeHtml(r.label||r.host)+'</div>'
+      +'<div class="rt-batch-host">'+escapeHtml(r.host)+(r.server?' · '+escapeHtml(r.server):'')+'</div>';
+    var pol=document.createElement('button');
+    pol.type='button'; pol.className='rt-badge'+(res.policy==='DIRECT'?' direct':'')+(res.overridden?'':' auto');
+    pol.textContent=res.policy==='DIRECT'?'DIRECT':'Proxy';
+    pol.title='点此切换直连 / 代理';
+    pol.onclick=function(){ rtCyclePolicy({host:r.host, group:res.group}); rtRenderBatch(); };
+    row.appendChild(cb); row.appendChild(info); row.appendChild(pol);
+    list.appendChild(row);
+  });
+}
+function rtBatchSetPolicy(policy){ // 'DIRECT' | 'PROXY' | null（恢复自动）
+  var urls=Object.keys(rtBatchSel);
+  if(!urls.length){ toast('先勾选线路'); return; }
+  var routes=rtCollectRoutes();
+  var groups=rtGetGroups();
+  var ov=rtGetOverrides();
+  var n=0;
+  urls.forEach(function(u){
+    var r=null;
+    for(var i=0;i<routes.length;i++){ if(routes[i].url===u){ r=routes[i]; break; } }
+    if(!r) return;
+    var g=rtMatchGroup((r.label||'')+' '+(r.server||''), groups);
+    var cur=ov[r.host]||{};
+    if(policy==null || policy===g.policy) delete cur.policy; else cur.policy=policy;
+    if(!cur.policy && !cur.type) delete ov[r.host]; else ov[r.host]=cur;
+    n++;
+  });
+  rtSaveOverrides(ov);
+  renderRouting(true);
+  rtRenderBatch();
+  toast('已对 '+n+' 条线路'+(policy==null?'恢复自动':(policy==='DIRECT'?'设为直连':'设为代理')));
+}
+function rtOpenBatch(){
+  rtBatchSel={};
+  rtRenderBatch();
+  $('rtBatchModal').style.display='flex';
+}
+$('btnRtBatch').onclick=function(){ rtOpenBatch(); };
+$('btnRtBatchDone').onclick=function(){ $('rtBatchModal').style.display='none'; };
+$('rtBatchModal').addEventListener('click', function(e){
+  if(e.target===$('rtBatchModal')) $('rtBatchModal').style.display='none';
+});
+$('btnRtBatchAll').onclick=function(){
+  var routes=rtCollectRoutes();
+  var all=routes.length && routes.every(function(r){ return rtBatchSel[r.url]; });
+  rtBatchSel={};
+  if(!all) routes.forEach(function(r){ rtBatchSel[r.url]=1; });
+  rtRenderBatch();
+};
+$('btnRtBatchDirect').onclick=function(){ rtBatchSetPolicy('DIRECT'); };
+$('btnRtBatchProxy').onclick=function(){ rtBatchSetPolicy('PROXY'); };
+$('btnRtBatchAuto').onclick=function(){ rtBatchSetPolicy(null); };
+$('btnRtBatchEditGroups').onclick=function(){
+  $('rtBatchModal').style.display='none';
+  $('rtGroupModal').style.display='flex';
+  rtRenderGroupEditor();
+};
+// ---- 整库线路测速 ----
+var rtLibSpeedResults=[]; // [{name, url, ms|null, error, via}]
+function rtLoadRouteIntoForm(url){
+  var list=getServers();
+  for(var i=0;i<list.length;i++){
+    var s=list[i], found=false;
+    for(var j=0;j<s.routes.length;j++){ if(s.routes[j].url===url){ found=true; break; } }
+    if(found){
+      fillForm(s);
+      routes.forEach(function(r){ r.checked=(r.url===url); });
+      saveRoutesLocal(); renderRoutes(); render();
+      toast('已切换到：'+(s.name||url));
+      return;
+    }
+  }
+  for(var k=0;k<routes.length;k++){
+    if(routes[k].url===url){
+      routes.forEach(function(r){ r.checked=false; });
+      routes[k].checked=true;
+      saveRoutesLocal(); renderRoutes(); render();
+      toast('已切换到：'+(routes[k].name||url));
+      return;
+    }
+  }
+}
+function rtRenderLibSpeed(){
+  var rows=$('rtSpeedRows'), sum=$('rtSpeedSummary');
+  var ok=rtLibSpeedResults.filter(function(r){ return r.ms!=null; });
+  var sorted=rtLibSpeedResults.slice().sort(function(a,b){ return (a.ms==null?1e9:a.ms)-(b.ms==null?1e9:b.ms); });
+  var fastest=ok.length?Math.min.apply(null, ok.map(function(r){ return r.ms; })):null;
+  var median=null;
+  if(ok.length){
+    var msList=ok.map(function(r){ return r.ms; }).sort(function(a,b){ return a-b; });
+    median=msList[Math.floor(msList.length/2)];
+  }
+  sum.innerHTML='<div class="sv"><b>'+ok.length+'/'+rtLibSpeedResults.length+'</b><span>可用线路</span></div>'
+    +(fastest!=null?'<div class="sv"><b>'+fastest+'ms</b><span>最快</span></div>':'')
+    +(median!=null?'<div class="sv"><b>'+median+'ms</b><span>中位延迟</span></div>':'');
+  rows.innerHTML='';
+  sorted.forEach(function(r, rank){
+    var g=speedGrade(r.ms);
+    var row=document.createElement('div');
+    row.className='rt-lib-row';
+    var host='';
+    try{ host=new URL(r.url).host; }catch(e){ host=r.url; }
+    row.innerHTML='<div class="speed-rank'+(rank===0&&r.ms!=null?' fast':'')+'">'+(r.ms!=null?(rank+1):'—')+'</div>'
+      +'<div class="speed-info"><div class="speed-name">'+escapeHtml(r.name||host)+'</div><div class="speed-host">'+escapeHtml(host)+(r.via==='edge'?' · 节点测':'')+'</div></div>'
+      +'<div class="speed-ms">'+(r.ms!=null?'<b>'+r.ms+'ms</b><span class="'+g.cls+'">'+g.label+(fastest!=null&&r.ms>fastest?' · +'+(r.ms-fastest)+'ms':'')+'</span>':'<b>—</b><span class="na">'+escapeHtml(r.error||'不可用')+'</span>')+'</div>';
+    row.onclick=function(){
+      $('rtSpeedModal').style.display='none';
+      rtLoadRouteIntoForm(r.url);
+    };
+    row.title='点此只用这条线路';
+    rows.appendChild(row);
+  });
+  $('btnRtSpeedFastest').style.display=ok.length?'':'none';
+  $('btnRtSpeedCopy').style.display=ok.length?'':'none';
+}
+async function rtRunLibrarySpeed(){
+  var targets=rtCollectRoutes();
+  if(!targets.length){ toast('库里还没有线路'); return; }
+  rtLibSpeedResults=[];
+  $('rtSpeedStatus').textContent='测速中…';
+  rtRenderLibSpeed();
+  var done=0;
+  await Promise.all(targets.map(async function(t, i){
+    var res=await testOneRoute({name:t.label||t.host, url:t.url}, i);
+    rtLibSpeedResults.push(res);
+    done++;
+    $('rtSpeedStatus').textContent='测速中 '+done+'/'+targets.length;
+    rtRenderLibSpeed();
+  }));
+  $('rtSpeedStatus').textContent='完成';
+  rtRenderLibSpeed();
+}
+$('btnRtSpeedAll').onclick=function(){
+  $('rtSpeedModal').style.display='flex';
+  rtRunLibrarySpeed();
+};
+$('btnRtSpeedDone').onclick=function(){ $('rtSpeedModal').style.display='none'; };
+$('rtSpeedModal').addEventListener('click', function(e){
+  if(e.target===$('rtSpeedModal')) $('rtSpeedModal').style.display='none';
+});
+$('btnRtSpeedFastest').onclick=function(){
+  var ok=rtLibSpeedResults.filter(function(r){ return r.ms!=null; }).sort(function(a,b){ return a.ms-b.ms; });
+  if(!ok.length) return;
+  $('rtSpeedModal').style.display='none';
+  rtLoadRouteIntoForm(ok[0].url);
+};
+$('btnRtSpeedCopy').onclick=function(){
+  var ok=rtLibSpeedResults.filter(function(r){ return r.ms!=null; }).sort(function(a,b){ return a.ms-b.ms; });
+  var lines=['Emby 整库线路测速结果'];
+  ok.forEach(function(r,i){ lines.push((i+1)+'. '+(r.name||r.url)+'（'+r.url+'）'+r.ms+'ms'); });
+  rtLibSpeedResults.filter(function(r){ return r.ms==null; }).forEach(function(r){ lines.push('✗ '+(r.name||r.url)+'（'+r.url+'）'+(r.error||'不可用')); });
+  var text=lines.join('\\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ toast('测速结果已复制'); }, function(){ fallbackCopy(text); toast('测速结果已复制'); }); }
+  else { fallbackCopy(text); toast('测速结果已复制'); }
+};
 function rtTouchLocal(){ try{ localStorage.setItem(LS_RT_LOCAL, String(Date.now())); }catch(e){} }
 function rtGetLocalTime(){ try{ var v=Number(localStorage.getItem(LS_RT_LOCAL)||'0'); return v||0; }catch(e){ return 0; } }
 function rtGetGistTime(){ try{ var v=Number(localStorage.getItem(LS_GIST_UPDATED)||'0'); return v||0; }catch(e){ return 0; } }
@@ -1034,21 +1324,43 @@ function renderRouting(force){
   var groups=data.groups, entries=data.entries;
   var box=$('rtGroups');
   box.innerHTML='';
-  if(!entries.length){
-    box.innerHTML='<p class="rt-empty">还没有可生成规则的线路。先在上面填 Emby 线路并点「💾 保存」，或粘贴开户通知识别后保存。</p>';
-  }
   groups.forEach(function(g){
     var list=entries.filter(function(e){ return e.group.id===g.id; });
     var grp=document.createElement('div');
     grp.className='rt-group'+(rtExpanded[g.id]?' open':'');
-    var kwText=g.id==='fallback'
-      ? ('未命中其他分组的域名 · '+list.length+' 个')
-      : ('关键词 '+g.keywords.join(' / ')+' · '+list.length+' 个域名');
+    var isDirect=g.id==='direct';
+    var status=list.length ? (list.length+' 个域名') : '未命中';
     var head=document.createElement('div');
     head.className='rt-group-head';
-    head.innerHTML='<div class="rt-gname"><b>'+escapeHtml(g.name)+' → '+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'</b><span>'+escapeHtml(kwText)+'</span></div>'
-      +'<span class="rt-policy'+(g.policy==='DIRECT'?' direct':'')+'">'+g.match+'</span>'
-      +'<span class="rt-chev">›</span>';
+    var ico=document.createElement('span');
+    ico.className='rt-gico'+(isDirect?' direct':'');
+    ico.textContent=isDirect?'→':'🌐';
+    var main=document.createElement('div');
+    main.className='rt-gmain';
+    var line1=document.createElement('div');
+    line1.className='rt-gline1';
+    line1.innerHTML='<b>'+escapeHtml(g.name)+'</b><span class="rt-garrow">→</span><span class="rt-gpol">'+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'</span>';
+    main.appendChild(line1);
+    var cap=document.createElement('button');
+    cap.type='button'; cap.className='rt-gcapsule';
+    cap.textContent=g.match+' ⇄';
+    cap.title='点此切换精确 / 后缀';
+    cap.onclick=function(e){ e.stopPropagation(); rtToggleGroupMatch(g); };
+    main.appendChild(cap);
+    if(g.keywords.length){
+      var kw=document.createElement('div');
+      kw.className='rt-gkw';
+      kw.textContent='关键词 '+g.keywords.join(' / ');
+      main.appendChild(kw);
+    }
+    var side=document.createElement('div');
+    side.className='rt-gside';
+    var st=document.createElement('span');
+    st.className='rt-gstatus'; st.textContent=status;
+    var chev=document.createElement('span');
+    chev.className='rt-chev'; chev.textContent='›';
+    side.appendChild(st); side.appendChild(chev);
+    head.appendChild(ico); head.appendChild(main); head.appendChild(side);
     head.onclick=function(){ rtExpanded[g.id]=!rtExpanded[g.id]; renderRouting(true); };
     grp.appendChild(head);
     var hostsEl=document.createElement('div');
@@ -1076,6 +1388,32 @@ function renderRouting(force){
       row.appendChild(info); row.appendChild(pol); row.appendChild(typ);
       hostsEl.appendChild(row);
     });
+    // 策略 / QX 策略（展开可见，点值切换）
+    var polRow=document.createElement('div');
+    polRow.className='rt-gdetail';
+    var polBtn=document.createElement('button');
+    polBtn.type='button'; polBtn.textContent=g.policy==='DIRECT'?'DIRECT':'Proxy';
+    polBtn.title='点此切换直连 / 代理';
+    polBtn.onclick=function(){ rtCycleGroupPolicy(g); };
+    polRow.appendChild(Object.assign(document.createElement('span'), { textContent:'策略' }));
+    polRow.appendChild(polBtn);
+    hostsEl.appendChild(polRow);
+    var qxRow=document.createElement('div');
+    qxRow.className='rt-gdetail';
+    var qxBtn=document.createElement('button');
+    qxBtn.type='button';
+    qxBtn.textContent=g.qx==='follow' ? ('跟随「'+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'」') : g.qx;
+    qxBtn.title='点此切换 QX 策略';
+    qxBtn.onclick=function(){ rtCycleGroupQx(g); };
+    qxRow.appendChild(Object.assign(document.createElement('span'), { textContent:'QX 策略' }));
+    qxRow.appendChild(qxBtn);
+    hostsEl.appendChild(qxRow);
+    if(!g.keywords.length){
+      var note=document.createElement('div');
+      note.className='rt-gnote';
+      note.textContent='ⓘ 这个分组还没有关键词，所以不会匹配到任何域名。';
+      hostsEl.appendChild(note);
+    }
     grp.appendChild(hostsEl);
     box.appendChild(grp);
   });
