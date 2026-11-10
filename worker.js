@@ -107,6 +107,40 @@ const HTML = `<!DOCTYPE html>
   #apps{margin:32px 2px 0}
   .apps-title{font-size:24px;font-weight:800;letter-spacing:-.3px;line-height:1.25}
   .apps-sub{font-size:14px;color:var(--muted);margin-top:6px;margin-bottom:16px}
+  #routing{margin:32px 2px 0}
+  .rt-group{border:1px solid var(--hairline);border-radius:var(--radius-sm);background:var(--field);margin-bottom:8px;overflow:hidden}
+  .rt-group-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;min-height:56px}
+  .rt-group-head:active{background:var(--accent-soft)}
+  .rt-ico{flex:none;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .rt-gname{flex:1;min-width:0}
+  .rt-gname b{font-size:16px;font-weight:700}
+  .rt-gname span{display:block;font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-policy{flex:none;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:999px}
+  .rt-policy.direct{color:var(--green);background:rgba(22,163,74,.12)}
+  .rt-chev{flex:none;color:var(--muted);font-size:14px;transition:transform var(--m-in) var(--ease)}
+  .rt-group.open .rt-chev{transform:rotate(90deg)}
+  .rt-hosts{display:none;border-top:1px solid var(--hairline);padding:6px 14px 10px}
+  .rt-group.open .rt-hosts{display:block}
+  .rt-host{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--hairline)}
+  .rt-host:first-child{border-top:none}
+  .rt-host-info{flex:1;min-width:0}
+  .rt-host-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-host-label{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-badge{flex:none;border:none;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent-soft);color:var(--accent)}
+  .rt-badge.direct{color:var(--green);background:rgba(22,163,74,.12)}
+  .rt-badge.auto{opacity:.65}
+  .rt-type{flex:none;border:1px solid var(--hairline-strong);border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;background:var(--surface);color:var(--accent)}
+  .rt-kw{width:100%;min-height:36px;font-size:14px;margin-top:8px}
+  .rt-kw-label{font-size:12px;color:var(--muted);margin-top:8px;display:block}
+  .rt-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .rt-tool{display:flex;align-items:center;gap:6px;border:1px solid var(--hairline);border-radius:999px;padding:8px 12px;font-size:14px;font-weight:600;cursor:pointer;background:var(--field)}
+  .rt-tool input{width:16px;height:16px;min-height:0;accent-color:var(--accent);padding:0}
+  .rt-tool.off{opacity:.5}
+  .rt-file{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--hairline);font-size:14px}
+  .rt-file:first-child{border-top:none}
+  .rt-file-name{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rt-file-meta{font-size:12px;color:var(--muted);flex:none}
+  .rt-empty{font-size:14px;color:var(--muted);padding:12px 0;line-height:1.6}
   .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-tile);padding:12px 6px 10px;cursor:pointer;min-width:0;overflow:hidden;transition:transform var(--m-in) var(--ease),box-shadow var(--m-in) var(--ease),border-color var(--m-in) var(--ease)}
   @media (hover:hover){ .tile:hover{transform:translateY(-2px);border-color:var(--hairline-strong);box-shadow:var(--shadow-tile-hover)} }
@@ -175,6 +209,32 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <section id="apps" aria-label="一键导入"></section>
+
+  <section id="routing" aria-label="分流同步">
+    <h2 class="apps-title">分流同步</h2>
+    <p class="apps-sub">从已保存的服务器线路生成代理规则，按关键词分组</p>
+    <div class="card">
+      <div id="rtGroups"></div>
+      <p class="route-count">单线路设置优先，其余按分组顺序匹配。点行看域名，点策略切换直连 / 代理，点胶囊切换精确 / 后缀。Loon 非直连统一走 PROXY。</p>
+      <label>生成哪些软件 <span id="rtToolCount" style="font-weight:400"></span></label>
+      <div class="rt-tools" id="rtTools"></div>
+      <div class="route-actions" style="margin-top:12px">
+        <button type="button" id="btnRtDownload" class="mini-btn">⬇ 下载全部</button>
+        <button type="button" id="btnRtCopy" class="mini-btn">复制全部</button>
+      </div>
+      <div id="rtFiles" style="margin-top:4px"></div>
+      <label>自动同步到 Gist</label>
+      <input id="rtGistToken" type="password" placeholder="GitHub 令牌（需要 gist 权限）" autocomplete="off" autocapitalize="off">
+      <div class="saved-row" style="margin-top:8px">
+        <input id="rtGistId" type="text" placeholder="Gist ID（首次同步后自动填入）" autocomplete="off" autocapitalize="off">
+        <button type="button" id="btnRtGist" class="mini-btn">同步到 Gist</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer">
+        <input type="checkbox" id="rtGistAuto" style="width:18px;height:18px;min-height:0;flex:none;accent-color:var(--accent);padding:0"> 保存服务器时自动同步
+      </label>
+      <p class="saved-note" id="rtGistStatus">令牌只存在本机浏览器，只发给 api.github.com，不经过本站服务器。没有令牌时先在 GitHub 创建一个带 gist 权限的令牌。</p>
+    </div>
+  </section>
 
   <p class="foot">密码只在本地拼进链接 · 不上传 · 不保存到服务器</p>
   <p class="foot">💗 感谢奥斯卡卡的鼎力协助</p>
@@ -270,8 +330,8 @@ function renderRoutes(){
     var ur=row.querySelector('.route-url');
     var del=row.querySelector('.route-del');
     cb.onchange=function(){ r.checked=cb.checked; saveRoutesLocal(); renderRoutes(); render(); };
-    nm.oninput=function(){ r.name=nm.value; saveRoutesLocal(); render(); };
-    ur.oninput=function(){ r.url=ur.value; saveRoutesLocal(); render(); };
+    nm.oninput=function(){ r.name=nm.value; saveRoutesLocal(); render(); renderRouting(); };
+    ur.oninput=function(){ r.url=ur.value; saveRoutesLocal(); render(); renderRouting(); };
     del.onclick=function(){
       if(routes.length<=1){ toast('至少保留一条线路'); return; }
       routes.splice(i,1); saveRoutesLocal(); renderRoutes(); render();
@@ -280,6 +340,7 @@ function renderRoutes(){
   });
   var n=getCheckedRoutes().length;
   $('routeCount').textContent=routes.length>1 ? ('（共 '+routes.length+' 条，已勾选 '+n+' 条）') : '';
+  renderRouting();
 }
 function setRoutes(list){
   routes=(list||[]).map(function(r){ return { name:(r&&r.name)||'', url:(r&&r.url)||'', checked:r&&r.checked!==false }; }).filter(function(r){ return r.url; });
@@ -621,6 +682,7 @@ function refreshSaved(keep){
     sel.appendChild(o);
   });
   if(cur!=='' && cur!=null && list[Number(cur)]) sel.value=String(cur);
+  renderRouting();
 }
 function fillForm(s){
   $('name').value=s.name||'';
@@ -648,6 +710,7 @@ $('btnSaveServer').onclick=function(){
   setServers(list);
   refreshSaved(idx>=0?idx:0);
   toast(idx>=0?'已更新':'已保存');
+  rtMaybeAutoSync();
 };
 $('btnDelServer').onclick=function(){
   var v=$('savedSelect').value;
@@ -657,8 +720,325 @@ $('btnDelServer').onclick=function(){
   setServers(list);
   refreshSaved();
   toast('已删除：'+(s&&s.name||''));
+  rtMaybeAutoSync();
 };
-refreshSaved();
+
+// ---- 分流规则同步（从已保存服务器取域名，按关键词分组，生成各软件规则 + Gist 同步） ----
+var LS_RT_OVERRIDES='embyimp_routing_overrides'; // {host:{policy:'DIRECT'|'PROXY', type:'DOMAIN'|'DOMAIN-SUFFIX'}}
+var LS_RT_GROUPS='embyimp_routing_groups'; // {groupId:[keywords]}
+var LS_GIST_TOKEN='embyimp_gist_token';
+var LS_GIST_ID='embyimp_gist_id';
+var LS_GIST_AUTO='embyimp_gist_auto';
+var LS_RT_TOOLS='embyimp_routing_tools';
+var RT_GROUPS=[
+  {id:'direct', name:'直连', policy:'DIRECT', type:'DOMAIN', keywords:['直连','直链','direct'], icon:'➡️'},
+  {id:'proxy', name:'代理', policy:'PROXY', type:'DOMAIN', keywords:['代理','中转','加速','relay','proxy'], icon:'🌐'},
+  {id:'cf', name:'CF 线路', policy:'PROXY', type:'DOMAIN', keywords:['cf','cloudflare','优选','官方'], icon:'🌐'},
+  {id:'fallback', name:'兜底', policy:'PROXY', type:'DOMAIN-SUFFIX', keywords:[], icon:'🌐'},
+];
+var RT_TOOLS=[
+  {id:'surge', name:'Surge', file:'emby-surge.list', fmt:'list'},
+  {id:'loon', name:'Loon', file:'emby-loon.list', fmt:'list'},
+  {id:'stash', name:'Stash', file:'emby-stash.yaml', fmt:'yaml'},
+  {id:'qx', name:'Quantumult X', file:'emby-qx.list', fmt:'qx'},
+  {id:'shadowrocket', name:'Shadowrocket', file:'emby-shadowrocket.list', fmt:'list'},
+  {id:'egern', name:'Egern', file:'emby-egern.list', fmt:'list'},
+  {id:'clash', name:'Clash', file:'emby-clash.yaml', fmt:'yaml'},
+];
+var rtExpanded={}; // groupId -> bool
+var rtLastSig='';
+
+function rtGetGroups(){
+  var custom={};
+  try{ custom=JSON.parse(localStorage.getItem(LS_RT_GROUPS)||'{}')||{}; }catch(e){}
+  return RT_GROUPS.map(function(g){
+    var kw=custom[g.id];
+    return { id:g.id, name:g.name, policy:g.policy, type:g.type, keywords:Array.isArray(kw)?kw:g.keywords, icon:g.icon };
+  });
+}
+function rtSaveGroupKeywords(id, keywords){
+  var custom={};
+  try{ custom=JSON.parse(localStorage.getItem(LS_RT_GROUPS)||'{}')||{}; }catch(e){}
+  custom[id]=keywords;
+  try{ localStorage.setItem(LS_RT_GROUPS, JSON.stringify(custom)); }catch(e){}
+  renderRouting(true);
+}
+function rtMatchGroup(label, groups){
+  var s=(label||'').toLowerCase();
+  for(var i=0;i<groups.length;i++){
+    var g=groups[i];
+    for(var j=0;j<g.keywords.length;j++){
+      var kw=String(g.keywords[j]||'').toLowerCase().trim();
+      if(kw && s.indexOf(kw)>=0) return g;
+    }
+  }
+  return groups[groups.length-1];
+}
+function rtCollectHosts(){
+  var map={};
+  function add(serverName, route){
+    var p=parseAddr(route.url);
+    if(!p || !p.host) return;
+    var host=p.host;
+    var label=(route.name||'').trim() || serverName || '';
+    if(!map[host]) map[host]={host:host, label:label, server:serverName||'', route:(route.name||'').trim()};
+    else if(!map[host].label && label) map[host].label=label;
+  }
+  getServers().forEach(function(s){ (s.routes||[]).forEach(function(r){ add(s.name, r); }); });
+  getCheckedRoutes().forEach(function(r){ add($('name').value.trim()||'Emby', r); });
+  return Object.keys(map).sort().map(function(k){ return map[k]; });
+}
+function rtGetOverrides(){
+  try{ return JSON.parse(localStorage.getItem(LS_RT_OVERRIDES)||'{}')||{}; }catch(e){ return {}; }
+}
+function rtSaveOverrides(o){ try{ localStorage.setItem(LS_RT_OVERRIDES, JSON.stringify(o)); }catch(e){} }
+function rtResolve(host, group, overrides){
+  var ov=overrides[host.host]||{};
+  return { policy:ov.policy||group.policy, type:ov.type||group.type, overridden:!!(ov.policy||ov.type) };
+}
+function rtGetTools(){
+  try{ var t=JSON.parse(localStorage.getItem(LS_RT_TOOLS)||'null'); if(Array.isArray(t)&&t.length) return t.filter(function(id){ return RT_TOOLS.some(function(x){ return x.id===id; }); }); }catch(e){}
+  return RT_TOOLS.map(function(x){ return x.id; });
+}
+function rtSaveTools(ids){ try{ localStorage.setItem(LS_RT_TOOLS, JSON.stringify(ids)); }catch(e){} }
+function rtBuildEntries(){
+  var groups=rtGetGroups();
+  var hosts=rtCollectHosts();
+  var overrides=rtGetOverrides();
+  var entries=[];
+  hosts.forEach(function(h){
+    var g=rtMatchGroup((h.label||'')+' '+(h.server||''), groups);
+    var r=rtResolve(h, g, overrides);
+    entries.push({ host:h.host, label:h.label, server:h.server, group:g, policy:r.policy, type:r.type, overridden:r.overridden });
+  });
+  // 按分组顺序，再按域名排序
+  var order={}; groups.forEach(function(g,i){ order[g.id]=i; });
+  entries.sort(function(a,b){ var d=order[a.group.id]-order[b.group.id]; return d!==0?d:(a.host<b.host?-1:a.host>b.host?1:0); });
+  return { groups:groups, entries:entries };
+}
+function rtBuildRules(tool, entries){
+  var lines=[];
+  if(tool.fmt==='yaml'){
+    lines.push('payload:');
+    entries.forEach(function(e){ lines.push('  - '+e.type+','+e.host+','+e.policy); });
+    return lines.join('\\n')+'\\n';
+  }
+  if(tool.fmt==='qx'){
+    entries.forEach(function(e){
+      var kw=e.type==='DOMAIN-SUFFIX' ? 'host-suffix' : 'host';
+      lines.push(kw+','+e.host+','+e.policy);
+    });
+    return lines.join('\\n')+'\\n';
+  }
+  entries.forEach(function(e){ lines.push(e.type+','+e.host+','+e.policy); });
+  return lines.join('\\n')+'\\n';
+}
+function rtBuildAllFiles(){
+  var entries=rtBuildEntries().entries;
+  var out={};
+  RT_TOOLS.forEach(function(t){ out[t.id]={ name:t.file, tool:t, content:rtBuildRules(t, entries) }; });
+  return out;
+}
+function rtCyclePolicy(host){
+  var ov=rtGetOverrides();
+  var cur=ov[host.host]||{};
+  var effective=cur.policy||host.group.policy;
+  var next=effective==='DIRECT'?'PROXY':'DIRECT';
+  if(next===host.group.policy) delete cur.policy; else cur.policy=next;
+  if(!cur.policy && !cur.type) delete ov[host.host]; else ov[host.host]=cur;
+  rtSaveOverrides(ov);
+  renderRouting(true);
+}
+function rtToggleType(host){
+  var ov=rtGetOverrides();
+  var cur=ov[host.host]||{};
+  var effective=cur.type||host.group.type;
+  var next=effective==='DOMAIN'?'DOMAIN-SUFFIX':'DOMAIN';
+  if(next===host.group.type) delete cur.type; else cur.type=next;
+  if(!cur.policy && !cur.type) delete ov[host.host]; else ov[host.host]=cur;
+  rtSaveOverrides(ov);
+  renderRouting(true);
+}
+function renderRouting(force){
+  var data=rtBuildEntries();
+  var sig=JSON.stringify(data.entries.map(function(e){ return [e.host,e.group.id,e.policy,e.type]; }))+'|'+rtGetTools().join(',');
+  if(!force && sig===rtLastSig) return;
+  rtLastSig=sig;
+  var groups=data.groups, entries=data.entries;
+  var box=$('rtGroups');
+  box.innerHTML='';
+  if(!entries.length){
+    box.innerHTML='<p class="rt-empty">还没有可生成规则的线路。先在上面填 Emby 线路并点「💾 保存」，或粘贴开户通知识别后保存。</p>';
+  }
+  groups.forEach(function(g){
+    var list=entries.filter(function(e){ return e.group.id===g.id; });
+    var grp=document.createElement('div');
+    grp.className='rt-group'+(rtExpanded[g.id]?' open':'');
+    var kwText=g.keywords.length?('关键词 '+g.keywords.join(' / ')+' · '+list.length+' 个域名'):'未命中其他分组的域名 · '+list.length+' 个';
+    var head=document.createElement('div');
+    head.className='rt-group-head';
+    head.innerHTML='<div class="rt-ico">'+g.icon+'</div>'
+      +'<div class="rt-gname"><b>'+escapeHtml(g.name)+' → '+(g.policy==='DIRECT'?'DIRECT':'Proxy')+'</b><span>'+escapeHtml(kwText)+'</span></div>'
+      +'<span class="rt-policy'+(g.policy==='DIRECT'?' direct':'')+'">'+g.type+'</span>'
+      +'<span class="rt-chev">›</span>';
+    head.onclick=function(){ rtExpanded[g.id]=!rtExpanded[g.id]; renderRouting(true); };
+    grp.appendChild(head);
+    var hostsEl=document.createElement('div');
+    hostsEl.className='rt-hosts';
+    if(!list.length){
+      hostsEl.innerHTML='<p class="rt-empty">暂无域名命中此分组。</p>';
+    }
+    list.forEach(function(h){
+      var row=document.createElement('div');
+      row.className='rt-host';
+      var info=document.createElement('div');
+      info.className='rt-host-info';
+      info.innerHTML='<div class="rt-host-name">'+escapeHtml(h.host)+(h.overridden?' <span style="color:var(--accent);font-size:11px">已自定义</span>':'')+'</div>'
+        +'<div class="rt-host-label">'+escapeHtml(h.label||h.server||'')+'</div>';
+      var pol=document.createElement('button');
+      pol.type='button'; pol.className='rt-badge'+(h.policy==='DIRECT'?' direct':'')+((rtGetOverrides()[h.host]||{}).policy?'':' auto');
+      pol.textContent=h.policy==='DIRECT'?'DIRECT':'Proxy';
+      pol.title='点此切换直连 / 代理';
+      pol.onclick=function(){ rtCyclePolicy(h); };
+      var typ=document.createElement('button');
+      typ.type='button'; typ.className='rt-type';
+      typ.textContent=h.type;
+      typ.title='点此切换精确 / 后缀';
+      typ.onclick=function(){ rtToggleType(h); };
+      row.appendChild(info); row.appendChild(pol); row.appendChild(typ);
+      hostsEl.appendChild(row);
+    });
+    if(g.id!=='fallback'){
+      var kwLabel=document.createElement('span');
+      kwLabel.className='rt-kw-label';
+      kwLabel.textContent='关键词（逗号分隔，改完自动保存）';
+      var kwInput=document.createElement('input');
+      kwInput.type='text'; kwInput.className='rt-kw';
+      kwInput.value=g.keywords.join('，');
+      kwInput.placeholder='例如：直连，直链，direct';
+      kwInput.onchange=function(){
+        var kws=kwInput.value.split(/[,，、\\s]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+        rtSaveGroupKeywords(g.id, kws);
+      };
+      hostsEl.appendChild(kwLabel); hostsEl.appendChild(kwInput);
+    }
+    grp.appendChild(hostsEl);
+    box.appendChild(grp);
+  });
+  // 工具选择
+  var toolsBox=$('rtTools');
+  toolsBox.innerHTML='';
+  var sel=rtGetTools();
+  $('rtToolCount').textContent=sel.length+' / '+RT_TOOLS.length+' 个';
+  RT_TOOLS.forEach(function(t){
+    var on=sel.indexOf(t.id)>=0;
+    var lab=document.createElement('label');
+    lab.className='rt-tool'+(on?'':' off');
+    var cb=document.createElement('input');
+    cb.type='checkbox'; cb.checked=on;
+    cb.onchange=function(){
+      var cur=rtGetTools();
+      if(cb.checked){ if(cur.indexOf(t.id)<0) cur.push(t.id); }
+      else { cur=cur.filter(function(x){ return x!==t.id; }); }
+      if(!cur.length){ cb.checked=true; toast('至少选一个'); return; }
+      rtSaveTools(cur);
+      renderRouting(true);
+    };
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(t.name));
+    toolsBox.appendChild(lab);
+  });
+  // 文件列表
+  var files=rtBuildAllFiles();
+  var filesBox=$('rtFiles');
+  filesBox.innerHTML='';
+  sel.forEach(function(id){
+    var f=files[id];
+    var row=document.createElement('div');
+    row.className='rt-file';
+    var nm=document.createElement('span');
+    nm.className='rt-file-name'; nm.textContent=f.name;
+    var meta=document.createElement('span');
+    meta.className='rt-file-meta'; meta.textContent=entries.length+' 条规则';
+    var cp=document.createElement('button');
+    cp.type='button'; cp.className='mini-btn'; cp.textContent='复制';
+    cp.onclick=function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(f.content).then(function(){ toast(f.name+' 已复制'); }, function(){ fallbackCopy(f.content); toast(f.name+' 已复制'); }); }
+      else { fallbackCopy(f.content); toast(f.name+' 已复制'); }
+    };
+    var dl=document.createElement('button');
+    dl.type='button'; dl.className='mini-btn'; dl.textContent='下载';
+    dl.onclick=function(){ rtDownloadFile(f); };
+    row.appendChild(nm); row.appendChild(meta); row.appendChild(cp); row.appendChild(dl);
+    filesBox.appendChild(row);
+  });
+}
+function rtDownloadFile(f){
+  var blob=new Blob([f.content], {type:'text/plain;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=f.name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+$('btnRtDownload').onclick=function(){
+  var sel=rtGetTools();
+  var files=rtBuildAllFiles();
+  if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
+  sel.forEach(function(id, i){ setTimeout(function(){ rtDownloadFile(files[id]); }, i*350); });
+  toast('已开始下载 '+sel.length+' 个规则文件');
+};
+$('btnRtCopy').onclick=function(){
+  var sel=rtGetTools();
+  var files=rtBuildAllFiles();
+  if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
+  var text=sel.map(function(id){ return '# '+files[id].name+'\\n'+files[id].content; }).join('\\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ toast('全部规则已复制'); }, function(){ fallbackCopy(text); toast('全部规则已复制'); }); }
+  else { fallbackCopy(text); toast('全部规则已复制'); }
+};
+async function rtGistSync(){
+  var token=$('rtGistToken').value.trim();
+  var gid=$('rtGistId').value.trim();
+  if(!token){ toast('先填 GitHub 令牌'); $('rtGistToken').focus(); return; }
+  if(!rtBuildEntries().entries.length){ toast('没有可生成的规则'); return; }
+  var files=rtBuildAllFiles();
+  var gistFiles={};
+  rtGetTools().forEach(function(id){ gistFiles[files[id].name]={content:files[id].content}; });
+  $('rtGistStatus').textContent='正在同步到 Gist…';
+  try{
+    var res=await fetch(gid?('https://api.github.com/gists/'+encodeURIComponent(gid)):'https://api.github.com/gists', {
+      method:gid?'PATCH':'POST',
+      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({description:'Emby 分流规则（emby-import 生成）', public:false, files:gistFiles})
+    });
+    var j=await res.json();
+    if(!res.ok) throw new Error((j&&j.message)||('HTTP '+res.status));
+    if(j.id){ $('rtGistId').value=j.id; try{ localStorage.setItem(LS_GIST_ID, j.id); }catch(e){} }
+    $('rtGistStatus').textContent='已同步到 Gist：'+(j.html_url||'')+'（'+new Date().toLocaleString('zh-CN')+'）';
+    toast('已同步到 Gist');
+  }catch(e){
+    $('rtGistStatus').textContent='同步失败：'+(e.message||e)+'。检查令牌是否有 gist 权限、Gist ID 是否正确。';
+    toast('同步失败');
+  }
+}
+$('btnRtGist').onclick=rtGistSync;
+$('rtGistToken').addEventListener('input', function(){ try{ localStorage.setItem(LS_GIST_TOKEN, this.value); }catch(e){} });
+$('rtGistId').addEventListener('input', function(){ try{ localStorage.setItem(LS_GIST_ID, this.value); }catch(e){} });
+$('rtGistAuto').addEventListener('change', function(){ try{ localStorage.setItem(LS_GIST_AUTO, this.checked?'1':'0'); }catch(e){} });
+function rtMaybeAutoSync(){
+  var auto=false;
+  try{ auto=localStorage.getItem(LS_GIST_AUTO)==='1'; }catch(e){}
+  if(!auto) return;
+  if(!$('rtGistToken').value.trim()) return;
+  rtGistSync();
+}
+(function rtInitGist(){
+  try{
+    var t=localStorage.getItem(LS_GIST_TOKEN); if(t) $('rtGistToken').value=t;
+    var g=localStorage.getItem(LS_GIST_ID); if(g) $('rtGistId').value=g;
+    $('rtGistAuto').checked=localStorage.getItem(LS_GIST_AUTO)==='1';
+  }catch(e){}
+})();
 
 // 记住名称/用户名（不记密码）；线路单独存 embyimp_routes
 ['name','username'].forEach(function(k){
@@ -677,6 +1057,7 @@ $('togglePw').onclick=function(){
   this.textContent=show?'隐藏':'显示';
 };
 render();
+renderRouting(true);
 
 </script>
 </body>

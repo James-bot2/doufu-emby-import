@@ -1,6 +1,6 @@
 # Emby 一键导入站
 
-填一次 Emby 服务器地址、用户名、密码，一键导入到 14 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer、DenPlayer）；多个服务器可以保存下来随时调用。支持多线路（主线路/备用线路一起导入，5 个 App 带备用线路）和线路测速（按延迟排序，一键用最快那条）。
+填一次 Emby 服务器地址、用户名、密码，一键导入到 14 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer、DenPlayer）；多个服务器可以保存下来随时调用。支持多线路（主线路/备用线路一起导入，5 个 App 带备用线路）、线路测速（按延迟排序，一键用最快那条）和分流同步（把保存的线路按关键词分直连/代理，生成各代理软件的规则文件或同步到私有 Gist）。
 
 ## 它是什么
 
@@ -159,6 +159,15 @@ node --check worker.js   # 检查语法
 - 测的是 Emby 的公开接口（`/System/Info/Public`，不用账号密码），只等响应头，不下载内容
 - 点任意一行、或点「⚡ 用最快线路」，就只用那条线路导入；「↻ 只重测失败」只重跑不通的；「复制结果」把排名复制出来
 - https 线路从你的浏览器直接测；http 线路经本站的服务器节点测（浏览器不允许 https 页面直接测 http），延迟数字仅供参考，快慢排序更有意义
+
+## 分流同步
+
+页面下方有个「分流同步」区：把已保存的服务器线路按域名生成代理规则。
+
+- **分组**：按线路名里的关键词分四组，直连（直连/直链/direct → DIRECT）、代理（代理/中转/加速/relay/proxy → Proxy）、CF 线路（cf/cloudflare/优选/官方 → Proxy）、兜底（没命中关键词的域名 → Proxy，后缀匹配）。点分组可以展开看里面的域名；关键词可以在展开后改。
+- **单线路设置**：点某条域名后的策略（DIRECT / Proxy）可以单独改，点 DOMAIN / DOMAIN-SUFFIX 胶囊可以切换精确还是后缀匹配，优先于分组。
+- **生成软件**：Surge、Loon、Stash、Quantumult X、Shadowrocket、Egern、Clash，一共 7 套，可勾选；点「⬇ 下载全部」一次下载选中的规则文件，每行也可以单独复制/下载。
+- **同步到 Gist**：填一个 GitHub 令牌（需要 `gist` 权限）和 Gist ID（首次同步后自动填），点「同步到 Gist」就把规则文件写进一个私有 Gist；勾选「保存服务器时自动同步」，以后保存/删除服务器会自动同步。令牌只存在本机浏览器，只发给 api.github.com。
 
 ## 剪贴板识别规则
 
