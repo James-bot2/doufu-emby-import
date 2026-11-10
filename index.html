@@ -137,6 +137,9 @@
   .rt-gdetail>span{color:var(--muted)}
   .rt-gdetail button{border:none;background:none;color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;padding:4px 0}
   .rt-gnote{font-size:13px;color:var(--muted);line-height:1.6;padding:10px 0 2px;border-top:1px solid var(--hairline)}
+  .rt-gkw-edit{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);font-size:15px}
+  .rt-gkw-edit>span{flex:none;color:var(--muted)}
+  .rt-gkw-input{flex:1;min-width:0;min-height:38px;padding:8px 10px;font-size:14px}
   .rt-edit-link{display:flex;align-items:center;gap:10px;width:100%;border:none;border-top:1px solid var(--hairline);background:none;padding:13px 4px;cursor:pointer;font-size:16px;color:var(--accent);font-weight:600;text-align:left}
   .rt-edit-link:active{background:var(--accent-soft)}
   .rt-batch-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hairline);font-size:14px}
@@ -1408,6 +1411,27 @@ function renderRouting(force){
     qxRow.appendChild(Object.assign(document.createElement('span'), { textContent:'QX 策略' }));
     qxRow.appendChild(qxBtn);
     hostsEl.appendChild(qxRow);
+    // 关键词输入框：直接在组里改，失焦/回车即保存并重新分组
+    var kwEdit=document.createElement('div');
+    kwEdit.className='rt-gkw-edit';
+    kwEdit.appendChild(Object.assign(document.createElement('span'), { textContent:'关键词' }));
+    var kwInput=document.createElement('input');
+    kwInput.type='text'; kwInput.className='rt-gkw-input';
+    kwInput.value=g.keywords.join(' ');
+    kwInput.placeholder='空格分隔，如 美国 日本 新加坡';
+    kwInput.setAttribute('autocomplete','off'); kwInput.setAttribute('autocapitalize','off'); kwInput.setAttribute('spellcheck','false');
+    kwInput.onchange=function(){
+      var groups=rtGetGroups();
+      for(var i=0;i<groups.length;i++){
+        if(groups[i].id===g.id){
+          groups[i].keywords=kwInput.value.split(/[\s,，、]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+          break;
+        }
+      }
+      rtSaveGroups(groups);
+    };
+    kwEdit.appendChild(kwInput);
+    hostsEl.appendChild(kwEdit);
     if(!g.keywords.length){
       var note=document.createElement('div');
       note.className='rt-gnote';
