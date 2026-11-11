@@ -1950,13 +1950,12 @@ renderRouting(true);
 // ---- 底部切换栏：一键导入 / 分流同步（两个视图，同一页内切换） ----
 // ---- 备份迁移 ----
 // 把 Hills / 卡皮巴拉备份里的 Emby 服务器解析出来，再用现有的 APPS 链接格式生成各播放器的导入链接。
-// 解密参数（2026-11-11 对迁移站的行为验证 + 公开参考实现 emby-bridge）：
-// - 卡皮巴拉：PBKDF2（口令 capyplayer_default_backup_key_2026，盐 capyplayer_backup_v1，SHA-256，10000 次，32 字节）+ AES-256-GCM（nonce 16 字节，tag 128 位）；encrypted_data = base64(nonce):base64(密文+tag)。已用虚构备份在迁移站上行为验证通过。
-// - Hills：AES-256-CBC（PKCS7），密钥/IV 已行为验证；内层服务器记录字段按公开参考实现 emby-bridge 的 Hills 格式（displyName/displayName/serverName、serverUrl/url、username/password、authenticateJson、serverRoutingList），迁移站自身的内层字段映射未确认——Hills 解析以真实备份实测为准。
+// 解密参数（2026-11-11 直接分析迁移站 emby-migrate.html 的 JS 源码所得；卡皮巴拉另用真实备份结构验证过）：
+// - 卡皮巴拉：PBKDF2（口令 capyplayer_default_backup_key_2026，盐 capyplayer_backup_v1，SHA-256，10000 次，32 字节）+ AES-256-GCM（nonce 16 字节，tag 128 位）；encrypted_data = base64(nonce):base64(密文+tag)。
+// - Hills：AES-256-CBC（PKCS7），密钥 = SHA-256("Hills")；没有固定 IV——data / serversData = base64(16 字节 IV || 密文)，IV 取解码后前 16 字节。内层：data 解开后是 JSON 数组（首条记录以 displayName 开头）；serversData 解开后是 {"version":1,"servers":[...]}。记录字段：displayName || serverName、serverUrl、username、password、authenticateJson（AccessToken / User.Id / ServerId）、serverRoutingList；v3 的密码/认证可能藏在 protocolConfigJson.values 里。明文开头可能被截掉几个字节，按已知头部 [{"displa / {"version" / {"language":"aut 补回。
 var CAPY_PASSWORD='capyplayer_default_backup_key_2026';
 var CAPY_SALT='capyplayer_backup_v1';
 var HILLS_KEY_HEX='9d2729bd3afe5536669610e25b3ef6b3a7fd1efe2a065187101b144951617bce';
-var HILLS_IV_HEX='bc322377137f312c2bff7a920aad959e';
 var MG_TARGETS=['streama','rex','afusekt','eplayerx','capyplayer','rodel','lenna','filebar','vidora','hills','vidhub','forward','senplayer'];
 var mgServers=[]; var mgSourceName=''; var mgTarget='streama';
 function mgB64ToBytes(b64){
@@ -1986,24 +1985,63 @@ async function mgDecryptCapy(outer){
   return JSON.parse(mgBytesToUtf8(new Uint8Array(plain)));
 }
 function mgParseHillsInner(text){
-  try{ var j=JSON.parse(text); if(j && (j.data||j.servers)) return j; }catch(e){}
-  // 真实 Hills 编码器的首块可能损坏（IV 处理），按已知前缀重建再解析
-  var prefixes=['{"version":2,"data":[','{"data":[{"displ','{"data":[{"displa','{"data":[{','{"data":['];
-  for(var i=0;i<prefixes.length;i++){
+  try{ var j=JSON.parse(text); if(Array.isArray(j) || (j && (j.data||j.servers))) return j; }catch(e){}
+  // Hills 会截掉明文开头几个字节（首块损坏），按已知头部补回（与迁移站一致）
+  var heads=['[{"displa','{"version"','{"language":"aut'];
+  for(var i=0;i<heads.length;i++){
+    try{ var j2=JSON.parse(heads[i]+text); if(Array.isArray(j2) || (j2 && (j2.data||j2.servers))) return j2; }catch(e){}
     for(var cut=14;cut<=18;cut++){
-      try{ var j2=JSON.parse(prefixes[i]+text.slice(cut)); if(j2 && (j2.data||j2.servers)) return j2; }catch(e){}
+      try{ var j3=JSON.parse(heads[i]+text.slice(cut)); if(Array.isArray(j3) || (j3 && (j3.data||j3.servers))) return j3; }catch(e){}
     }
   }
   throw new Error('解密成功，但无法还原成 JSON（内层格式未识别）');
 }
-async function mgDecryptHills(outer){
-  var field=outer.data ? 'data' : (outer.serversData ? 'serversData' : null);
-  if(!field) throw new Error('找不到 data / serversData 字段');
-  var cipher=mgB64ToBytes(outer[field]);
-  if(cipher.length<=16) throw new Error('密文太短');
+async function mgDecryptHillsField(b64){
+  var raw=mgB64ToBytes(b64);
+  if(raw.length<32) throw new Error('密文太短（'+raw.length+' 字节）');
+  if(raw.length%16) throw new Error('密文长度 '+raw.length+' 不是 16 的倍数');
+  var iv=raw.subarray(0,16), cipher=raw.subarray(16);
   var key=await crypto.subtle.importKey('raw', mgHexToBytes(HILLS_KEY_HEX), 'AES-CBC', false, ['decrypt']);
-  var plain=await crypto.subtle.decrypt({name:'AES-CBC', iv:mgHexToBytes(HILLS_IV_HEX)}, key, cipher);
+  var plain=await crypto.subtle.decrypt({name:'AES-CBC', iv:iv}, key, cipher);
   return mgParseHillsInner(mgBytesToUtf8(new Uint8Array(plain)));
+}
+async function mgDecryptHills(outer){
+  var inners=[];
+  if(outer.data) inners.push(await mgDecryptHillsField(outer.data));
+  if(outer.serversData) inners.push(await mgDecryptHillsField(outer.serversData));
+  if(!inners.length) throw new Error('找不到 data / serversData 字段');
+  return inners;
+}
+function mgDedupeLines(lines, mainUrl){
+  var seen={}; var out=[];
+  (lines||[]).forEach(function(l){
+    if(!l || typeof l.url!=='string') return;
+    var u=l.url.trim(); if(!u || u===mainUrl || seen[u]) return; seen[u]=1;
+    var nm=(l.name||'').trim();
+    if(!nm){ try{ nm=new URL(u).hostname; }catch(e){ nm=''; } }
+    out.push({name:nm, url:u});
+  });
+  return out;
+}
+function mgCapyLines(r, mainUrl){
+  var lines=[];
+  var br=r.backup_routes || r.backupRoutes || r.routes;
+  var arr=null;
+  if(typeof br==='string'){ try{ arr=JSON.parse(br); }catch(e){ arr=null; } }
+  else if(Array.isArray(br)) arr=br;
+  else if(br && typeof br==='object') arr=br;
+  if(arr && typeof arr==='object' && !Array.isArray(arr)){
+    Object.keys(arr).forEach(function(k){ lines.push({name:k, url:String(arr[k])}); });
+    return mgDedupeLines(lines, mainUrl);
+  }
+  if(Array.isArray(arr)) arr.forEach(function(x){
+    if(typeof x==='string'){ lines.push({name:'', url:x}); return; }
+    if(x && typeof x==='object'){
+      if(x.url){ lines.push({name:x.name||'', url:x.url}); return; }
+      if(x.host){ var bs=x.https?'https':'http'; var bp=x.port?String(x.port):''; var bu=bs+'://'+x.host; if(bp && !((bs==='https'&&bp==='443')||(bs==='http'&&bp==='80'))) bu+=':'+bp; bu+=(x.path||''); lines.push({name:x.name||'', url:bu}); }
+    }
+  });
+  return mgDedupeLines(lines, mainUrl);
 }
 function mgServersFromCapy(inner){
   var rows=(((inner||{}).tables||{}).media_server_resources)||[];
@@ -2013,20 +2051,32 @@ function mgServersFromCapy(inner){
     var addr=scheme+'://'+(r.host||'');
     if(port && !((scheme==='https'&&port==='443')||(scheme==='http'&&port==='80'))) addr+=':'+port;
     addr+=(r.path||'');
-    var lines=[];
-    try{ var br=JSON.parse(r.backup_routes||'[]'); if(Array.isArray(br)) br.forEach(function(x){ if(x && x.host){ var bs=x.https?'https':'http'; var bp=x.port?String(x.port):''; var bu=bs+'://'+x.host; if(bp && !((bs==='https'&&bp==='443')||(bs==='http'&&bp==='80'))) bu+=':'+bp; bu+=(x.path||''); lines.push({name:x.name||'', url:bu}); } }); }catch(e){}
-    return { name:r.name||r.host||'Emby', address:addr, username:r.username||'', password:r.password||'', lines:lines };
+    return { name:r.name||r.host||'Emby', address:addr, username:r.username||'', password:r.password||'', lines:mgCapyLines(r, addr) };
   }).filter(function(s){ return s.address && /^https?:\/\/[^\/]+/.test(s.address); });
 }
-function mgServersFromHills(inner){
-  var arr=inner.data || inner.servers || [];
-  if(!Array.isArray(arr)) return [];
-  return arr.map(function(h){
-    var auth={}; try{ auth=JSON.parse(h.authenticateJson||'{}')||{}; }catch(e){}
-    var lines=[];
-    if(Array.isArray(h.serverRoutingList)) h.serverRoutingList.forEach(function(x){ if(x && x.url) lines.push({name:x.name||'', url:x.url}); });
-    return { name:h.displyName || h.displayName || h.displaayName || h.serverName || '', address:h.serverUrl || h.url || '', username:h.username||'', password:h.password||'', lines:lines };
-  }).filter(function(s){ return s.address; });
+function mgServersFromHills(inners){
+  var map={}; var list=[];
+  (inners||[]).forEach(function(inner){
+    var arr=Array.isArray(inner) ? inner : (inner.data || inner.servers || []);
+    if(!Array.isArray(arr)) return;
+    arr.forEach(function(h){
+      if(!h || typeof h!=='object') return;
+      var vals={};
+      try{ var pc=typeof h.protocolConfigJson==='string'?JSON.parse(h.protocolConfigJson):h.protocolConfigJson; if(pc && pc.values) vals=pc.values; }catch(e){}
+      var url=h.serverUrl || '';
+      var user=h.username||'';
+      var key2=url+'|'+user;
+      if(map[key2]) return;
+      var lines=[];
+      if(Array.isArray(h.serverRoutingList)) h.serverRoutingList.forEach(function(x){ if(x && (x.url||x.address||x.serverUrl)) lines.push({name:x.name||x.label||x.remark||'', url:x.url||x.address||x.serverUrl, _id:x.id}); });
+      if(h.selectedServerRoutingId){ var si=-1; for(var k=0;k<lines.length;k++) if(lines[k]._id===h.selectedServerRoutingId){ si=k; break; } if(si>0){ var sel=lines.splice(si,1)[0]; lines.unshift(sel); } }
+      lines.forEach(function(l){ delete l._id; });
+      var srv={ name:h.displayName || h.serverName || url, address:url, username:user, password:h.password||vals.password||'', lines:lines, orderIndex:typeof h.orderIndex==='number'?h.orderIndex:999 };
+      map[key2]=srv; list.push(srv);
+    });
+  });
+  list.sort(function(a,b){ return a.orderIndex-b.orderIndex; });
+  return list.filter(function(s){ return s.address; });
 }
 async function mgParseBackup(text){
   if(typeof crypto==='undefined' || !crypto.subtle) throw new Error('需要 HTTPS 环境才能解密（请用部署后的页面打开）');
@@ -2038,8 +2088,8 @@ async function mgParseBackup(text){
     return { source:'capyplayer', sourceName:'卡皮巴拉', servers:mgServersFromCapy(inner) };
   }
   if(outer.data || outer.serversData){
-    var hinner=await mgDecryptHills(outer);
-    return { source:'hills', sourceName:'Hills', servers:mgServersFromHills(hinner) };
+    var hinners=await mgDecryptHills(outer);
+    return { source:'hills', sourceName:'Hills', servers:mgServersFromHills(hinners) };
   }
   throw new Error('无法识别：不是 Hills 或卡皮巴拉的备份（需要 HillsBackup.json 或 capyplayer_backup_*.json）');
 }

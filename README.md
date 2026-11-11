@@ -196,7 +196,7 @@ node --check worker.js   # 检查语法
 4. **隐私。** 解密和链接生成全在本机完成，备份文件不上传；刷新页面后解析结果就消失。导入链接里包含明文账号密码，用完及时删除不需要的链接。
 
 - **卡皮巴拉**：备份是加密的（PBKDF2 + AES-256-GCM），页面用固定参数在本地解密，再读 `media_server_resources` 里的服务器（含 `backup_routes` 备用线路）。
-- **Hills**：备份也是加密的（AES-256-CBC），页面用固定密钥在本地解密，再按 Hills 的服务器记录格式读（`displyName` / `serverUrl` / `username` / `password` / `serverRoutingList`）。Hills 的内层字段是按公开的 Hills 格式资料实现的，如果你的真实 Hills 备份解析出来是 0 台服务器，把备份发给站长看一眼字段再修。
+- **Hills**：备份也是加密的（AES-256-CBC，密钥 = SHA-256("Hills")，没有固定 IV——IV 在密文前 16 字节里），页面在本地解密，再按 Hills 的服务器记录格式读（`displayName` / `serverUrl` / `username` / `password` / `serverRoutingList`）。内层是 JSON 数组（v3 是 `{"version":1,"servers":[...]}`）。
 
 ## 剪贴板识别规则
 
