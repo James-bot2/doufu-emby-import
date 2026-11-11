@@ -35,7 +35,7 @@ Source: ProxyHub_Emby source code.
 senplayer://importserver?type=emby&name=<name>&address=<full URL>&username=<user>&password=<pass>
 ```
 
-- **Multi-route (2026-11-10):** each extra checked route appends `&address=<url>&backup=<name|url>` (the backup value is `name|url`, URL-encoded as a whole; unnamed routes get `线路2`, `线路3`, …).
+- **Multi-route (2026-11-11, corrected — user-supplied SenPlayer format):** each extra checked route appends `&address<n>name=<name>&address<n>=<url>` (n = 1, 2, … — the backup line index; each backup line needs both a name and an address). SenPlayer supports backup lines for emby, jellyfin and feiniu. Unnamed routes get `线路2`, `线路3`, ….
 
 ### Rex — ✅ confirmed
 
@@ -71,7 +71,7 @@ vidora://emby/import?server_url=<origin>&server_path=<path prefix or empty>&user
 
 - `server_url` = origin only (`scheme://host:port`), `server_path` = the path prefix (e.g. `/emby`) or empty.
 - The tutorial also documents an optional `payload` param (Base64URL-encoded JSON, takes priority over plain params; `backups:[{"remark":"直连","address":"https://…"}]`) and a clipboard template — neither is used by the site.
-- **Multi-route (2026-11-10):** each extra checked route appends `&backup=<name|url>` (same `name|url` shape as SenPlayer).
+- **Multi-route (2026-11-10):** each extra checked route appends `&backup=<name|url>` (the backup value is `name|url`, URL-encoded as a whole).
 
 ### Reflix — ⏸️ removed from the page for now
 
@@ -258,7 +258,7 @@ After filling, the page re-renders the generated links and saves address/usernam
 
 ## Multi-route (2026-11-10)
 
-The single 「Emby 地址」 input was replaced by a routes list. Each route row has a checkbox (include in import), a name field (e.g. 主线路 / 备用线路), a URL field, and a ✕ delete (at least one route is kept). 「＋ 添加线路」 appends a row. The first checked route is the primary — it supplies the address/scheme/host/port/path for every app; the checked extras are appended as backups only for the five apps that support them (SenPlayer `address=`+`backup=name|url`, Rex `line<n>`+`line<n>title`, EplayerX `backupHref=url;name,…`, Vidora `backup=name|url`, VidHub `line<n>`+`line<n>title`). The other 8 apps use the primary route only. Unchecking a route removes it from the links; the header shows `共 N 条，已勾选 M 条`.
+The single 「Emby 地址」 input was replaced by a routes list. Each route row has a checkbox (include in import), a name field (e.g. 主线路 / 备用线路), a URL field, and a ✕ delete (at least one route is kept). 「＋ 添加线路」 appends a row. The first checked route is the primary — it supplies the address/scheme/host/port/path for every app; the checked extras are appended as backups only for the five apps that support them (SenPlayer `address<n>name`+`address<n>`, Rex `line<n>`+`line<n>title`, EplayerX `backupHref=url;name,…`, Vidora `backup=name|url`, VidHub `line<n>`+`line<n>title`). The other 8 apps use the primary route only. Unchecking a route removes it from the links; the header shows `共 N 条，已勾选 M 条`.
 
 - State: `routes` array `[{name, url, checked}]`, persisted to localStorage `embyimp_routes`; the old single-value `embyimp_address` is read once as the initial route if no routes are stored.
 - `parseRoutes(text)` extracts routes + names (see Clipboard section); `parseClipboard` now returns `{routes, username, password}`.
@@ -377,6 +377,7 @@ The site behaves like a standalone app when added to the home screen (user: "添
 
 ## Change log
 
+- 2026-11-11: **SenPlayer 备用线路格式修正** (user-supplied: 「address1name + address1、address2name + address2，数字表示线路序号」; emby/jellyfin/feiniu 均支持备用线路）. The SenPlayer builder previously appended backups as `&address=<url>&backup=<name|url>`; it now appends `&address<n>name=<name>&address<n>=<url>` (n = 1, 2, …). This also fixes the migration page's SenPlayer links (it reuses the same builder). Verified with a Node test (backup lines produce address1name/address1, address2name/address2).
 - 2026-11-11: **备份迁移页面** (user: 「把这两个网页的功能 加到我的网页embyimport 里」+「capy 和 hills 备份迁移项目再开一个页面」) — third tab 📦 备份迁移 (`#view-migrate`, `#migrate`). Upload/paste a Hills or CapyPlayer backup → client-side decrypt (WebCrypto) → servers → 13 target players (Streama/Rex/Afusekt/EplayerX/卡皮巴拉/小幻/Lenna/Filebar/Vidora/Hills/VidHub/Forward/SenPlayer) with 打开/复制 per server, 查看全部 13 个 App modal, 填入表单， 保存服务器. CapyPlayer fully verified (PBKDF2 + AES-256-GCM params behavior-verified on the migration site); Hills key/IV verified, inner fields per public emby-bridge reference (the migration site's own Hills mapping could not be confirmed — see the Backup migration section). Forward is a migration-only target (not on the main grid). 31 Node tests + headless-browser screenshots (CapyPlayer + Hills fake backups both parse to 2 servers). Deployed live and verified (200, 备份迁移 present).
 - 2026-11-11: **DenPlayer removed** (user: 「记得把 denplayer 给去掉」) — APPS entry deleted; page is now 13 tiles, hero 「13 个播放器」. Format kept in the SKILL.md DenPlayer section for re-adding. Deployed live and verified (200, 0 denplayer refs).
 - 2026-11-06: launched at `emby.example.org`; SenPlayer + Rex formats confirmed from ProxyHub_Emby source; EplayerX universal link + Vidora official format added from user material; Reflix unresolved; 4 real icons embedded.
