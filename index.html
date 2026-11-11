@@ -44,12 +44,36 @@
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .wrap{max-width:560px;margin:0 auto;position:relative;z-index:1}
   /* 底部切换栏：一键导入 / 分流同步（固定底栏，内容底边已留出 96px） */
-  #view-import[hidden], #view-routing[hidden]{display:none}
+  #view-import[hidden], #view-routing[hidden], #view-migrate[hidden]{display:none}
   .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);border-top:1px solid var(--hairline);padding-bottom:env(safe-area-inset-bottom)}
   .tabbar-inner{display:flex;width:100%;max-width:560px;margin:0 auto}
   .tabbar button{flex:1;border:none;background:none;padding:9px 0 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit}
   .tabbar button .tab-ic{font-size:20px;line-height:1}
   .tabbar button.active{color:var(--accent)}
+
+  /* ---- 备份迁移 ---- */
+  .mg-drop{border:2px dashed var(--hairline);border-radius:14px;padding:22px 14px;text-align:center;cursor:pointer;background:var(--field)}
+  .mg-drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .mg-drop-ic{font-size:28px;margin-bottom:6px}
+  .mg-drop-sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .mg-or{text-align:center;color:var(--muted);font-size:13px;margin:14px 0 8px}
+  .mg-text{width:100%;box-sizing:border-box;min-height:96px;border:1.5px solid var(--hairline);border-radius:var(--radius-sm);padding:12px 14px;font-size:14px;font-family:inherit;background:var(--field);color:var(--ink);resize:vertical;outline:none}
+  .mg-note{font-size:13px;color:var(--muted);margin:10px 0 0;min-height:18px;line-height:1.5}
+  .mg-summary{font-weight:700;margin:18px 0 10px}
+  .mg-targets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+  .mg-chip{border:1px solid var(--hairline);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;font-family:inherit}
+  .mg-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .mg-note2{font-size:13px;color:var(--muted);margin:0 0 12px}
+  .mg-server{margin-bottom:12px}
+  .mg-srv-head{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}
+  .mg-srv-addr{font-size:13px;color:var(--muted);word-break:break-all}
+  .mg-srv-meta{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .mg-link-row{display:flex;gap:8px;align-items:center}
+  .mg-link{flex:1;min-width:0;border:1px solid var(--hairline);border-radius:10px;padding:8px 10px;font-size:13px;background:var(--field);color:var(--ink);font-family:inherit}
+  .mg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .mg-all-row{margin-bottom:14px}
+  .mg-all-name{font-weight:700;font-size:14px;margin-bottom:4px}
+  .mg-all-btns{display:flex;gap:8px;margin-top:6px}
   .hero{margin:4px 2px 32px}
   h1{font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
   h1 .accent-word{color:var(--accent)}
@@ -352,6 +376,29 @@
   </section>
   </div><!-- /view-routing -->
 
+  <!-- 备份迁移页 -->
+  <div id="view-migrate" hidden>
+  <section id="migrate" aria-label="备份迁移">
+    <h2 class="apps-title">备份迁移</h2>
+    <p class="apps-sub">把 Hills / 卡皮巴拉备份里的 Emby 服务器，变成各个播放器能一键导入的链接</p>
+    <div class="card">
+      <div class="mg-drop" id="mgDrop" tabindex="0" role="button" aria-label="上传备份文件">
+        <div class="mg-drop-ic">📦</div>
+        <div><b>点击上传或拖拽备份文件到这里</b></div>
+        <div class="mg-drop-sub">只接受 HillsBackup.json 或 capyplayer_backup_*.json · 文件不会离开你的手机</div>
+      </div>
+      <input type="file" id="mgFile" accept=".json,application/json" hidden>
+      <div class="mg-or">或者直接粘贴 JSON 文本</div>
+      <textarea id="mgText" class="mg-text" rows="4" placeholder="粘贴备份文件的完整 JSON 内容"></textarea>
+      <div style="height:12px"></div>
+      <button type="button" id="mgParse" class="paste-btn">解析备份</button>
+      <p class="mg-note" id="mgStatus" role="status"></p>
+      <p class="mg-note">全部在本地完成解密与链接生成，不上传到任何服务器；刷新页面后解析结果即消失。导入链接里包含明文账号密码，请确保来源可信，用完及时删除不需要的链接。</p>
+    </div>
+    <div id="mgResult"></div>
+  </section>
+  </div><!-- /view-migrate -->
+
   <!-- 分组编辑 / 批量管理 / 整库测速弹窗（固定定位，不属于任一视图） -->
   <div id="rtGroupModal" class="rt-modal" style="display:none" role="dialog" aria-label="编辑分组">
     <div class="rt-modal-card">
@@ -401,16 +448,25 @@
     </div>
   </div>
 
+
+  <div id="mgAllModal" class="rt-modal" style="display:none" role="dialog" aria-label="全部导入链接">
+    <div class="rt-modal-card">
+      <div class="rt-modal-head"><b id="mgAllTitle">全部 13 个 App</b><button type="button" class="mini-btn" id="mgAllClose">关闭</button></div>
+      <div id="mgAllBody"></div>
+      <div style="margin-top:12px"><button type="button" class="paste-btn" id="mgAllCopyAll" style="margin-bottom:0">复制全部链接</button></div>
+    </div>
+  </div>
   <p class="foot">密码只在本地拼进链接 · 不上传 · 不保存到服务器</p>
   <p class="foot">💗 感谢奥斯卡卡的鼎力协助</p>
 
 </div>
 
-<!-- 底部切换栏：一键导入 / 分流同步 -->
+<!-- 底部切换栏：一键导入 / 分流同步 / 备份迁移 -->
 <nav class="tabbar" aria-label="页面切换">
   <div class="tabbar-inner">
     <button type="button" data-view="import" class="active" aria-current="page"><span class="tab-ic">⬇️</span><span>一键导入</span></button>
     <button type="button" data-view="routing"><span class="tab-ic">🔀</span><span>分流同步</span></button>
+    <button type="button" data-view="migrate"><span class="tab-ic">📦</span><span>备份迁移</span></button>
   </div>
 </nav>
 
@@ -1892,11 +1948,242 @@ render();
 renderRouting(true);
 
 // ---- 底部切换栏：一键导入 / 分流同步（两个视图，同一页内切换） ----
+// ---- 备份迁移 ----
+// 把 Hills / 卡皮巴拉备份里的 Emby 服务器解析出来，再用现有的 APPS 链接格式生成各播放器的导入链接。
+// 解密参数（2026-11-11 对迁移站的行为验证 + 公开参考实现 emby-bridge）：
+// - 卡皮巴拉：PBKDF2（口令 capyplayer_default_backup_key_2026，盐 capyplayer_backup_v1，SHA-256，10000 次，32 字节）+ AES-256-GCM（nonce 16 字节，tag 128 位）；encrypted_data = base64(nonce):base64(密文+tag)。已用虚构备份在迁移站上行为验证通过。
+// - Hills：AES-256-CBC（PKCS7），密钥/IV 已行为验证；内层服务器记录字段按公开参考实现 emby-bridge 的 Hills 格式（displyName/displayName/serverName、serverUrl/url、username/password、authenticateJson、serverRoutingList），迁移站自身的内层字段映射未确认——Hills 解析以真实备份实测为准。
+var CAPY_PASSWORD='capyplayer_default_backup_key_2026';
+var CAPY_SALT='capyplayer_backup_v1';
+var HILLS_KEY_HEX='9d2729bd3afe5536669610e25b3ef6b3a7fd1efe2a065187101b144951617bce';
+var HILLS_IV_HEX='bc322377137f312c2bff7a920aad959e';
+var MG_TARGETS=['streama','rex','afusekt','eplayerx','capyplayer','rodel','lenna','filebar','vidora','hills','vidhub','forward','senplayer'];
+var mgServers=[]; var mgSourceName=''; var mgTarget='streama';
+function mgB64ToBytes(b64){
+  var s=String(b64||'').replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4) s+='=';
+  var bin=atob(s); var out=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+function mgHexToBytes(hex){
+  var h=String(hex||'').replace(/\s/g,''); var out=new Uint8Array(h.length/2);
+  for(var i=0;i<out.length;i++) out[i]=parseInt(h.substr(i*2,2),16);
+  return out;
+}
+function mgUtf8Bytes(s){ return new TextEncoder().encode(s||''); }
+function mgBytesToUtf8(b){ return new TextDecoder().decode(b); }
+async function mgDecryptCapy(outer){
+  var parts=String(outer.encrypted_data||'').split(':');
+  if(parts.length!==2) throw new Error('encrypted_data 格式不对（应为 nonce:密文）');
+  var nonce=mgB64ToBytes(parts[0]);
+  if(nonce.length!==16) throw new Error('nonce 应为 16 字节，实际 '+nonce.length);
+  var cipher=mgB64ToBytes(parts[1]);
+  var baseKey=await crypto.subtle.importKey('raw', mgUtf8Bytes(CAPY_PASSWORD), 'PBKDF2', false, ['deriveBits']);
+  var keyBits=await crypto.subtle.deriveBits({name:'PBKDF2', salt: mgUtf8Bytes(CAPY_SALT), iterations:10000, hash:'SHA-256'}, baseKey, 256);
+  var key=await crypto.subtle.importKey('raw', keyBits, 'AES-GCM', false, ['decrypt']);
+  var plain=await crypto.subtle.decrypt({name:'AES-GCM', iv:nonce, tagLength:128}, key, cipher);
+  return JSON.parse(mgBytesToUtf8(new Uint8Array(plain)));
+}
+function mgParseHillsInner(text){
+  try{ var j=JSON.parse(text); if(j && (j.data||j.servers)) return j; }catch(e){}
+  // 真实 Hills 编码器的首块可能损坏（IV 处理），按已知前缀重建再解析
+  var prefixes=['{"version":2,"data":[','{"data":[{"displ','{"data":[{"displa','{"data":[{','{"data":['];
+  for(var i=0;i<prefixes.length;i++){
+    for(var cut=14;cut<=18;cut++){
+      try{ var j2=JSON.parse(prefixes[i]+text.slice(cut)); if(j2 && (j2.data||j2.servers)) return j2; }catch(e){}
+    }
+  }
+  throw new Error('解密成功，但无法还原成 JSON（内层格式未识别）');
+}
+async function mgDecryptHills(outer){
+  var field=outer.data ? 'data' : (outer.serversData ? 'serversData' : null);
+  if(!field) throw new Error('找不到 data / serversData 字段');
+  var cipher=mgB64ToBytes(outer[field]);
+  if(cipher.length<=16) throw new Error('密文太短');
+  var key=await crypto.subtle.importKey('raw', mgHexToBytes(HILLS_KEY_HEX), 'AES-CBC', false, ['decrypt']);
+  var plain=await crypto.subtle.decrypt({name:'AES-CBC', iv:mgHexToBytes(HILLS_IV_HEX)}, key, cipher);
+  return mgParseHillsInner(mgBytesToUtf8(new Uint8Array(plain)));
+}
+function mgServersFromCapy(inner){
+  var rows=(((inner||{}).tables||{}).media_server_resources)||[];
+  return rows.map(function(r){
+    var scheme=r.https ? 'https' : 'http';
+    var port=r.port ? String(r.port) : '';
+    var addr=scheme+'://'+(r.host||'');
+    if(port && !((scheme==='https'&&port==='443')||(scheme==='http'&&port==='80'))) addr+=':'+port;
+    addr+=(r.path||'');
+    var lines=[];
+    try{ var br=JSON.parse(r.backup_routes||'[]'); if(Array.isArray(br)) br.forEach(function(x){ if(x && x.host){ var bs=x.https?'https':'http'; var bp=x.port?String(x.port):''; var bu=bs+'://'+x.host; if(bp && !((bs==='https'&&bp==='443')||(bs==='http'&&bp==='80'))) bu+=':'+bp; bu+=(x.path||''); lines.push({name:x.name||'', url:bu}); } }); }catch(e){}
+    return { name:r.name||r.host||'Emby', address:addr, username:r.username||'', password:r.password||'', lines:lines };
+  }).filter(function(s){ return s.address && /^https?:\/\/[^\/]+/.test(s.address); });
+}
+function mgServersFromHills(inner){
+  var arr=inner.data || inner.servers || [];
+  if(!Array.isArray(arr)) return [];
+  return arr.map(function(h){
+    var auth={}; try{ auth=JSON.parse(h.authenticateJson||'{}')||{}; }catch(e){}
+    var lines=[];
+    if(Array.isArray(h.serverRoutingList)) h.serverRoutingList.forEach(function(x){ if(x && x.url) lines.push({name:x.name||'', url:x.url}); });
+    return { name:h.displyName || h.displayName || h.displaayName || h.serverName || '', address:h.serverUrl || h.url || '', username:h.username||'', password:h.password||'', lines:lines };
+  }).filter(function(s){ return s.address; });
+}
+async function mgParseBackup(text){
+  if(typeof crypto==='undefined' || !crypto.subtle) throw new Error('需要 HTTPS 环境才能解密（请用部署后的页面打开）');
+  var outer;
+  try{ outer=JSON.parse(text); }catch(e){ throw new Error('不是有效的 JSON'); }
+  if(!outer || typeof outer!=='object') throw new Error('不是有效的 JSON 对象');
+  if(outer.encrypted_data){
+    var inner=await mgDecryptCapy(outer);
+    return { source:'capyplayer', sourceName:'卡皮巴拉', servers:mgServersFromCapy(inner) };
+  }
+  if(outer.data || outer.serversData){
+    var hinner=await mgDecryptHills(outer);
+    return { source:'hills', sourceName:'Hills', servers:mgServersFromHills(hinner) };
+  }
+  throw new Error('无法识别：不是 Hills 或卡皮巴拉的备份（需要 HillsBackup.json 或 capyplayer_backup_*.json）');
+}
+function mgAppInfo(id){
+  if(id==='forward') return { id:'forward', name:'Forward', emoji:'⏩' };
+  for(var i=0;i<APPS.length;i++) if(APPS[i].id===id) return APPS[i];
+  return null;
+}
+function mgBuildLink(id, p, routes){
+  if(id==='forward') return 'forward://import?type=emby&address='+enc(p.address)+'&scheme='+p.scheme+'&host='+p.host+'&port='+p.port+'&username='+enc(p.username)+'&password='+enc(p.password)+'&title='+enc(p.name);
+  var app=mgAppInfo(id); if(!app) return '';
+  return app.build(p, routes);
+}
+function mgServerParams(s){
+  var p=parseAddr(s.address); if(!p) return null;
+  p.name=s.name||p.host; p.username=s.username||''; p.password=s.password||'';
+  var routes=[{name:'', url:s.address, checked:true}].concat((s.lines||[]).map(function(l){ return {name:l.name||'', url:l.url, checked:true}; }));
+  return { p:p, routes:routes };
+}
+function mgToServer(s){
+  var routes=[{name:'', url:s.address, checked:true}].concat((s.lines||[]).map(function(l){ return {name:l.name||'', url:l.url, checked:true}; }));
+  return { name:s.name||'Emby', routes:routes, username:s.username||'', password:s.password||'' };
+}
+function mgCopyText(text, msg){
+  var done=function(){ toast(msg); };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); }); }
+  else { fallbackCopy(text); done(); }
+}
+function mgRender(){
+  var box=$('mgResult');
+  if(!mgServers.length){ box.innerHTML=''; return; }
+  var html='<div class="mg-summary">来源：'+escapeHtml(mgSourceName)+' · 解析出 '+mgServers.length+' 台服务器</div>';
+  html+='<div class="mg-targets" role="group" aria-label="目标播放器">';
+  MG_TARGETS.forEach(function(id){
+    var a=mgAppInfo(id); if(!a) return;
+    html+='<button type="button" class="mg-chip'+(id===mgTarget?' on':'')+'" data-target="'+id+'">'+escapeHtml(a.emoji||'▶️')+' '+escapeHtml(a.name)+'</button>';
+  });
+  html+='</div>';
+  html+='<div class="mg-note2">已选 '+escapeHtml(mgAppInfo(mgTarget).name)+'，每台服务器下方可直接打开或复制</div>';
+  mgServers.forEach(function(s, i){
+    var sp=mgServerParams(s);
+    var link=sp ? mgBuildLink(mgTarget, sp.p, sp.routes) : '';
+    html+='<div class="card mg-server">';
+    html+='<div class="mg-srv-head"><b>'+escapeHtml(s.name)+'</b><span class="mg-srv-addr">'+escapeHtml(s.address)+'</span></div>';
+    html+='<div class="mg-srv-meta">用户名 '+escapeHtml(s.username||'—')+' · 密码 '+(s.password?'••••••':'—')+'</div>';
+    if(link) html+='<div class="mg-link-row"><input class="mg-link" readonly value="'+escapeHtml(link)+'" aria-label="导入链接"><button type="button" class="mini-btn mg-open" data-i="'+i+'">打开</button><button type="button" class="mini-btn mg-copy" data-i="'+i+'">复制链接</button></div>';
+    else html+='<div class="mg-srv-meta">地址解析失败，无法生成链接</div>';
+    html+='<div class="mg-actions"><button type="button" class="mini-btn mg-all" data-i="'+i+'">查看全部 13 个 App →</button><button type="button" class="mini-btn mg-fill" data-i="'+i+'">填入表单</button><button type="button" class="mini-btn mg-save" data-i="'+i+'">保存服务器</button></div>';
+    html+='</div>';
+  });
+  box.innerHTML=html;
+}
+function mgLinkFor(i, targetId){
+  var s=mgServers[i]; if(!s) return '';
+  var sp=mgServerParams(s); if(!sp) return '';
+  return mgBuildLink(targetId||mgTarget, sp.p, sp.routes);
+}
+$('mgResult').addEventListener('click', function(e){
+  var t=e.target;
+  if(t.classList.contains('mg-chip')){ mgTarget=t.dataset.target; mgRender(); return; }
+  var i=t.dataset && t.dataset.i!=null ? Number(t.dataset.i) : -1;
+  if(i<0 || !mgServers[i]) return;
+  if(t.classList.contains('mg-open')){ var l1=mgLinkFor(i); if(l1) location.href=l1; return; }
+  if(t.classList.contains('mg-copy')){ var l2=mgLinkFor(i); if(l2) mgCopyText(l2, mgAppInfo(mgTarget).name+' 链接已复制'); return; }
+  if(t.classList.contains('mg-fill')){
+    fillForm(mgToServer(mgServers[i])); setView('import'); toast('已填入表单：'+mgServers[i].name); return;
+  }
+  if(t.classList.contains('mg-save')){
+    var entry=mgToServer(mgServers[i]); entry.updatedAt=Date.now();
+    var list=getServers(); var idx=-1;
+    for(var k=0;k<list.length;k++){ if(serverAddr(list[k])===serverAddr(entry)&&list[k].username===entry.username){ idx=k; break; } }
+    if(idx>=0){ list[idx]=entry; } else { list.unshift(entry); if(list.length>200) list.length=200; }
+    setServers(list); refreshSaved(idx>=0?idx:0); toast(idx>=0?'已更新':'已保存'); return;
+  }
+  if(t.classList.contains('mg-all')){ mgOpenAll(i); return; }
+});
+var mgAllIndex=0;
+function mgOpenAll(i){
+  var s=mgServers[i]; if(!s) return;
+  mgAllIndex=i;
+  $('mgAllTitle').textContent=s.name+' · 全部 13 个 App';
+  var html='';
+  MG_TARGETS.forEach(function(id){
+    var a=mgAppInfo(id); if(!a) return;
+    var link=mgLinkFor(i, id);
+    html+='<div class="mg-all-row"><div class="mg-all-name">'+escapeHtml(a.emoji||'▶️')+' '+escapeHtml(a.name)+'</div>';
+    if(link){
+      html+='<div class="mg-link-row"><input class="mg-link" readonly value="'+escapeHtml(link)+'" aria-label="'+escapeHtml(a.name)+' 导入链接"><button type="button" class="mini-btn mg-all-open" data-link="'+escapeHtml(link)+'">打开</button><button type="button" class="mini-btn mg-all-copy" data-link="'+escapeHtml(link)+'" data-name="'+escapeHtml(a.name)+'">复制</button></div>';
+    } else html+='<div class="mg-srv-meta">无法生成链接</div>';
+    html+='</div>';
+  });
+  $('mgAllBody').innerHTML=html;
+  $('mgAllModal').style.display='flex';
+}
+$('mgAllClose').onclick=function(){ $('mgAllModal').style.display='none'; };
+$('mgAllModal').addEventListener('click', function(e){
+  if(e.target===$('mgAllModal')){ $('mgAllModal').style.display='none'; return; }
+  var t=e.target;
+  if(t.classList.contains('mg-all-open')){ location.href=t.dataset.link; return; }
+  if(t.classList.contains('mg-all-copy')){ mgCopyText(t.dataset.link, t.dataset.name+' 链接已复制'); return; }
+});
+$('mgAllCopyAll').onclick=function(){
+  var s=mgServers[mgAllIndex]; if(!s) return;
+  var lines=MG_TARGETS.map(function(id){
+    var a=mgAppInfo(id); var link=mgLinkFor(mgAllIndex, id);
+    return link ? (a.name+': '+link) : '';
+  }).filter(Boolean);
+  mgCopyText(lines.join('\n'), '已复制 13 条链接');
+};
+function mgReadFile(f){
+  var r=new FileReader();
+  r.onload=function(){ $('mgText').value=String(r.result||''); mgDoParse(); };
+  r.onerror=function(){ toast('读取文件失败'); };
+  r.readAsText(f);
+}
+$('mgFile').addEventListener('change', function(){ if(this.files && this.files[0]) mgReadFile(this.files[0]); this.value=''; });
+$('mgDrop').addEventListener('click', function(){ $('mgFile').click(); });
+$('mgDrop').addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('mgFile').click(); } });
+$('mgDrop').addEventListener('dragover', function(e){ e.preventDefault(); this.classList.add('over'); });
+$('mgDrop').addEventListener('dragleave', function(){ this.classList.remove('over'); });
+$('mgDrop').addEventListener('drop', function(e){ e.preventDefault(); this.classList.remove('over'); var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if(f) mgReadFile(f); });
+$('mgParse').onclick=function(){ mgDoParse(); };
+async function mgDoParse(){
+  var text=$('mgText').value.trim();
+  if(!text){ toast('先上传备份文件或粘贴 JSON'); return; }
+  $('mgStatus').textContent='正在解析…';
+  try{
+    var res=await mgParseBackup(text);
+    mgServers=res.servers; mgSourceName=res.sourceName;
+    if(!mgServers.length){ $('mgStatus').textContent='解析成功，但没有找到服务器（'+res.sourceName+' 备份里 0 台服务器）'; $('mgResult').innerHTML=''; return; }
+    $('mgStatus').textContent='解析成功：'+res.sourceName+' · '+mgServers.length+' 台服务器';
+    mgRender();
+  }catch(e){
+    mgServers=[]; $('mgResult').innerHTML='';
+    $('mgStatus').textContent='解析失败：'+(e && e.message || e);
+  }
+}
+
 var LS_VIEW='embyimp_view';
 function setView(v, push){
-  var isRt=v==='routing';
-  $('view-import').hidden=isRt;
-  $('view-routing').hidden=!isRt;
+  if(v!=='import' && v!=='routing' && v!=='migrate') v='import';
+  $('view-import').hidden=v!=='import';
+  $('view-routing').hidden=v!=='routing';
+  $('view-migrate').hidden=v!=='migrate';
   document.querySelectorAll('.tabbar button').forEach(function(b){
     var on=b.dataset.view===v;
     b.classList.toggle('active', on);
@@ -1904,18 +2191,20 @@ function setView(v, push){
   });
   try{ localStorage.setItem(LS_VIEW, v); }catch(e){}
   if(push!==false){ try{ history.replaceState(null,'','#'+v); }catch(e){} }
-  if(isRt) renderRouting(true);
+  if(v==='routing') renderRouting(true);
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(function(b){
   b.onclick=function(){ setView(b.dataset.view); };
 });
-// 初始视图：#routing 优先，其次上次停留的视图，否则一键导入
+// 初始视图：#routing / #migrate 优先，其次上次停留的视图，否则一键导入
 var startView='import';
 try{
   if(location.hash==='#routing') startView='routing';
+  else if(location.hash==='#migrate') startView='migrate';
   else if(location.hash==='#import') startView='import';
   else if(localStorage.getItem(LS_VIEW)==='routing') startView='routing';
+  else if(localStorage.getItem(LS_VIEW)==='migrate') startView='migrate';
 }catch(e){}
 setView(startView, false);
 

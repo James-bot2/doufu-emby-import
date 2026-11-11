@@ -1,6 +1,6 @@
 # Emby 一键导入站
 
-填一次 Emby 服务器地址、用户名、密码，一键导入到 13 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer）；多个服务器可以保存下来随时调用。支持多线路（主线路/备用线路一起导入，5 个 App 带备用线路）、线路测速（按延迟排序，一键用最快那条）和分流同步（把保存的线路按关键词分直连/代理，生成各代理软件的规则文件或同步到私有 Gist）。
+填一次 Emby 服务器地址、用户名、密码，一键导入到 13 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer）；多个服务器可以保存下来随时调用。支持多线路（主线路/备用线路一起导入，5 个 App 带备用线路）、线路测速（按延迟排序，一键用最快那条）、分流同步（把保存的线路按关键词分直连/代理，生成各代理软件的规则文件或同步到私有 Gist）和备份迁移（把 Hills / 卡皮巴拉备份里的服务器解密出来，一键导入到 13 个播放器）。
 
 ## 它是什么
 
@@ -183,6 +183,20 @@ node --check worker.js   # 检查语法
 - **生成软件**：Surge、Shadowrocket、Egern、Loon、Quantumult X、Stash / Clash，一共 6 个（7 份文件）。Surge 和 Shadowrocket 是模块（`.sgmodule`，Surge 的带 `EmbyProxy` 参数，通用 Proxy 时导入后在模块里就能改策略；填了具体策略名时会直接用那个名字写进规则），Loon 是插件（`.plugin`，在插件详情里选策略组，非直连统一走 PROXY），Egern 是 YAML 规则文件，QX 是规则列表，Stash 和 Clash 是同一份 YAML（`payload:`）。点「⬇ 下载全部」一次下载选中的规则文件，每行也可以单独复制/下载。
 - **同步**：页面显示域名个数、本地更新时间、Gist 更新时间；「同步到」可以选本地 + Gist、仅本地或仅 Gist；点「↻ 立即同步」执行。
 - **同步到 Gist**：填一个 GitHub 令牌（需要 `gist` 权限）和 Gist ID（首次同步后自动填），点「同步到 Gist」就把规则文件写进一个私有 Gist；勾选「保存服务器时自动同步」，以后保存/删除服务器会自动同步。令牌只存在本机浏览器，只发给 api.github.com。同步成功后，「一键导入（Gist）」区会给出每个文件的地址，复制到代理软件里就能直接导入（GitHub 约 5 分钟缓存）。
+
+## 备份迁移
+
+页面底部有个切换栏（⬇️ 一键导入 / 🔀 分流同步 / 📦 备份迁移），点「备份迁移」切到备份页：把 Hills / 卡皮巴拉备份里的 Emby 服务器解密出来，变成各个播放器能一键导入的链接（功能参考奥斯卡卡的 Emby 迁移站）。
+
+### 怎么用
+
+1. **上传或粘贴备份。** 点虚线框上传 `HillsBackup.json` 或 `capyplayer_backup_*.json`（也可以直接拖文件进来），或者把备份文件的完整 JSON 粘贴到下面的文本框，点「解析备份」。
+2. **选目标播放器。** 解析出服务器后，点一行目标播放器（13 个：Streama、Rex、Afusekt、EplayerX、卡皮巴拉、小幻、Lenna、Filebar、Vidora、Hills、VidHub、Forward、SenPlayer，默认 Streama）。
+3. **导入。** 每台服务器下面就是所选播放器的导入链接，点「打开」直接进 App，点「复制链接」复制；「查看全部 13 个 App →」一次看全 13 条链接，还能「复制全部链接」。「填入表单」把这台服务器填进一键导入页，「保存服务器」把它存进已保存的服务器。
+4. **隐私。** 解密和链接生成全在本机完成，备份文件不上传；刷新页面后解析结果就消失。导入链接里包含明文账号密码，用完及时删除不需要的链接。
+
+- **卡皮巴拉**：备份是加密的（PBKDF2 + AES-256-GCM），页面用固定参数在本地解密，再读 `media_server_resources` 里的服务器（含 `backup_routes` 备用线路）。
+- **Hills**：备份也是加密的（AES-256-CBC），页面用固定密钥在本地解密，再按 Hills 的服务器记录格式读（`displyName` / `serverUrl` / `username` / `password` / `serverRoutingList`）。Hills 的内层字段是按公开的 Hills 格式资料实现的，如果你的真实 Hills 备份解析出来是 0 台服务器，把备份发给站长看一眼字段再修。
 
 ## 剪贴板识别规则
 
