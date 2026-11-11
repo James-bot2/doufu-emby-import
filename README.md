@@ -1,6 +1,6 @@
 # Emby 一键导入站
 
-填一次 Emby 服务器地址、用户名、密码，一键导入到 14 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer、DenPlayer）；多个服务器可以保存下来随时调用。支持多线路（主线路/备用线路一起导入，5 个 App 带备用线路）、线路测速（按延迟排序，一键用最快那条）和分流同步（把保存的线路按关键词分直连/代理，生成各代理软件的规则文件或同步到私有 Gist）。
+填一次 Emby 服务器地址、用户名、密码，一键导入到 13 个播放器 App（SenPlayer、Rex、EplayerX、Vidora、Noctra、小幻影视、Hills、FileBar、VidHub、Lenna、Afusekt、Streama、CapyPlayer）；多个服务器可以保存下来随时调用。支持多线路（主线路/备用线路一起导入，5 个 App 带备用线路）、线路测速（按延迟排序，一键用最快那条）和分流同步（把保存的线路按关键词分直连/代理，生成各代理软件的规则文件或同步到私有 Gist）。
 
 ## 它是什么
 
@@ -29,7 +29,8 @@
 | Afusekt | ✅ 已确认 | `afusekt://media.server?...`（用户从 chilledmelon 导入模板抄来的格式） |
 | Streama | ✅ 已确认 | `streama://importserver?...`（用户从 chilledmelon 导入模板抄来的格式） |
 | CapyPlayer | ✅ 已确认 | `com.feifeiduck.capyplayer://add-resource?data=...`（官方文档，base64url JSON） |
-| DenPlayer | ✅ 已确认 | `denplayer://emby/import?...`（用户提供的格式） |
+
+DenPlayer 已于 2026-11-11 从页面撤下（格式保留在 SKILL.md 里，需要时可恢复）。
 
 Reflix 的官方格式还没找到：它 App 里如果有像 Vidora 那样的导入教程，截图发出来，我按那个改（也欢迎直接提 PR）。
 
